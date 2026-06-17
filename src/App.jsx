@@ -1,24 +1,58 @@
 import { useState, useEffect, useRef } from "react";
+import { fetchActualites, addContactMessage, submitDemandeDomaine, submitDemandeEquipement, submitDeclarationPanne, submitDemandeEmail, submitDemandePlateforme } from "./supabaseClient";
+import AdminPage from "./AdminPage";
+import {
+  Globe, Handshake, Server, Brain,
+  Zap, Network, GraduationCap, Shield,
+  Radio, Building2, Calendar, Database,
+  Code2, Landmark, Monitor, AlertTriangle, Mail, Layers,
+} from "lucide-react";
+import emailjs from "@emailjs/browser";
+
+async function sendEmailNotification(sujet, contenu, emailExpediteur = "") {
+  const serviceId = import.meta.env.VITE_EMAILJS_SERVICE_ID;
+  const templateId = import.meta.env.VITE_EMAILJS_TEMPLATE_ID;
+  const publicKey = import.meta.env.VITE_EMAILJS_PUBLIC_KEY;
+  if (!serviceId || !templateId || !publicKey) return;
+  try {
+    await emailjs.send(serviceId, templateId, {
+      sujet,
+      contenu,
+      email_expediteur: emailExpediteur,
+    }, { publicKey });
+  } catch {}
+}
 // Images from project `images/` folder
 import heroImg from "../images/fond-humain-de-poignee-de-main-de-robot-ere-numerique-futuriste-2048x1365.jpg";
 import act1 from "../images/act1.jpg";
 import act2 from "../images/act2.jpg";
 import act3 from "../images/act3.jpg";
 import act4 from "../images/act4.jpg";
-import dgAdoum from "../images/dg-adoum-djimet1.jpg";
+import dgAdoum from "../images/dg geek.jpg";
 import igfReunion from "../images/igf-reunion.jpg";
 import rencontreDgSmart from "../images/rencontre-dg-et-smart.jpg";
 import aiTraining from "../images/pexels-photo-1054397-1.jpeg";
-import tdLogo from "../images/td.png";
 import siteLogo from "../images/logo.jpg";
 
+const IMAGE_MAP = {
+  "igf-reunion.jpg": igfReunion,
+  "rencontre-dg-et-smart.jpg": rencontreDgSmart,
+  "fond-humain-de-poignee-de-main-de-robot-ere-numerique-futuriste-2048x1365.jpg": heroImg,
+  "pexels-photo-1054397-1.jpeg": aiTraining,
+  "act1.jpg": act1,
+  "act2.jpg": act2,
+  "act3.jpg": act3,
+  "act4.jpg": act4,
+};
+
 const NAV_LINKS = [
-  { label: "Accueil", href: "#hero" },
-  { label: "Actualités", href: "#actualites" },
-  { label: "Direction Générale", href: "#direction" },
-  { label: "Activités", href: "#activites" },
-  { label: "Missions", href: "#missions" },
-  { label: "Contact", href: "#contact" },
+  { label: "Accueil", href: "#hero", page: "home" },
+  { label: "Direction Générale", href: "#direction", page: "home" },
+  { label: "Actualités", href: "#actualites", page: "articles" },
+  { label: "Activités", href: "#activites", page: "home" },
+  { label: "Missions", href: "#missions", page: "home" },
+  { label: "E-Services", href: "#eservices", page: "eservices" },
+  { label: "Contact", href: "#contact", page: "home" },
 ];
 
 const PRIMARY_COLOR = "#ffffff";
@@ -30,6 +64,19 @@ const TEXT_COLOR = "#0f172a";
 const MUTED_TEXT = "rgba(15,23,42,0.7)";
 const CARD_BG = "rgba(15,23,42,0.04)";
 const PANEL_BG = "rgba(15,23,42,0.03)";
+
+const FORM_INPUT_STYLE = {
+  padding: "12px 16px",
+  borderRadius: 8,
+  border: "1px solid rgba(15,23,42,0.12)",
+  background: "rgba(15,23,42,0.03)",
+  fontSize: 14,
+  color: "#0f172a",
+  outline: "none",
+  width: "100%",
+  boxSizing: "border-box",
+  fontFamily: "inherit",
+};
 const HERO_TEXT_COLOR = "#0f172a";
 const HERO_SUBTEXT_COLOR = "rgba(15,23,42,0.7)";
 
@@ -37,10 +84,11 @@ const ACTUALITES = [
   {
     category: "Forum",
     date: "16–21 Fév 2026",
-    title: "Participation stratégique du Tchad au Forum sur la Gouvernance de l'Internet de l'Afrique Centrale",
-    excerpt: "Du 16 au 21 février 2026, le Tchad a pris une part active au Forum sur la Gouvernance de l'Internet, renforçant sa position comme acteur clé du numérique africain.",
+    title: "Participation stratégique du Tchad au Forum sur la Gouvernance de l’Internet de l’Afrique Centrale",
+    excerpt: "Du 16 au 21 février 2026, le Tchad a pris une part active au Forum sur la Gouvernance de l’Internet, renforçant sa position comme acteur clé du numérique africain.",
+    content: "Le Tchad a défendu une vision de gouvernance inclusive, soulignant l’importance d’une infrastructure numérique souveraine et d’un accès universel au premier plan des politiques nationales.",
     color: "#00C9A7",
-    icon: "🌐",
+    icon: Globe,
     image: igfReunion,
   },
   {
@@ -48,8 +96,9 @@ const ACTUALITES = [
     date: "Fév 2026",
     title: "Coopération numérique : des experts azerbaïdjanais en visite de travail à l'ADETIC",
     excerpt: "Dans le cadre du renforcement de la coopération internationale en matière de transformation digitale, une délégation d'experts azerbaïdjanais a effectué une visite officielle.",
+    content: "Les échanges ont porté sur des projets de connectivité, des solutions d'interopérabilité et l'accompagnement des startups tchadiennes vers des partenariats technologiques durables.",
     color: "#4F8EF7",
-    icon: "🤝",
+    icon: Handshake,
     image: rencontreDgSmart,
   },
   {
@@ -57,8 +106,9 @@ const ACTUALITES = [
     date: "Fév 2026",
     title: "Audit et certification du Data Center national : l'ADETIC, l'ANSICE et TECHSO-GROUP en mission conjointe",
     excerpt: "Dans le cadre de la mise en œuvre de l'accord tripartite, l'ADETIC s'engage pour la certification du datacenter national tchadien.",
+    content: "L'audit porte sur l'architecture, la résilience et la conformité aux meilleures pratiques internationales, assurant ainsi la sécurité des données publiques de l'État.",
     color: "#F7B731",
-    icon: "🖥️",
+    icon: Server,
     image: heroImg,
   },
   {
@@ -66,15 +116,16 @@ const ACTUALITES = [
     date: "2025",
     title: "Formation de haut niveau sur l'Intelligence Artificielle",
     excerpt: "L'ADETIC, en collaboration avec l'UNESCO et l'ENASTIC, organise une formation d'excellence sur l'IA pour les cadres nationaux.",
+    content: "La formation vise à renforcer les compétences en data science, apprentissage automatique et gouvernance éthique de l'IA au sein des administrations publiques tchadiennes.",
     color: "#FC5C65",
-    icon: "🤖",
+    icon: Brain,
     image: aiTraining,
   },
 ];
 
 const MISSIONS = [
   {
-    icon: "⚡",
+    icon: Zap,
     title: "Infrastructures Numériques",
     desc: "Mise en place et maintenance d'infrastructures solides et sécurisées pour un accès fiable aux services numériques de l'État.",
     stat: "80%",
@@ -82,7 +133,7 @@ const MISSIONS = [
     color: "#00C9A7",
   },
   {
-    icon: "🔗",
+    icon: Network,
     title: "Systèmes d'Information Publics",
     desc: "Coordination des systèmes gouvernementaux pour leur interopérabilité, leur sécurité et une gestion efficace des données.",
     stat: "IXP",
@@ -90,7 +141,7 @@ const MISSIONS = [
     color: "#4F8EF7",
   },
   {
-    icon: "🎓",
+    icon: GraduationCap,
     title: "Formation & Accompagnement",
     desc: "Montée en compétences digitales des administrations avec des formations adaptées pour une utilisation optimale des outils.",
     stat: "6+",
@@ -98,7 +149,7 @@ const MISSIONS = [
     color: "#F7B731",
   },
   {
-    icon: "🛡️",
+    icon: Shield,
     title: "Sécurité & Veille Technologique",
     desc: "Veille technologique permanente et recommandations en matière de sécurité des réseaux et certification numérique.",
     stat: ".td",
@@ -108,10 +159,10 @@ const MISSIONS = [
 ];
 
 const CHIFFRES = [
-  { val: "80%", label: "Réseau fibre complété", icon: "📡" },
-  { val: "6+", label: "Télécentres provinciaux", icon: "🏢" },
-  { val: "2014", label: "Année de création", icon: "📅" },
-  { val: "IXP", label: "Internet Exchange Point", icon: "🌍" },
+  { val: "80%", label: "Réseau fibre complété", icon: Radio },
+  { val: "6+", label: "Télécentres provinciaux", icon: Building2 },
+  { val: "2014", label: "Année de création", icon: Calendar },
+  { val: "IXP", label: "Internet Exchange Point", icon: Globe },
 ];
 
 function useInView(ref, threshold = 0.15) {
@@ -125,6 +176,24 @@ function useInView(ref, threshold = 0.15) {
     return () => obs.disconnect();
   }, [ref, threshold]);
   return inView;
+}
+
+function IconBadge({ icon: Icon, bg = "rgba(15,23,42,0.08)", color = "#0f172a", size = 44 }) {
+  const iconSize = size <= 44 ? 18 : 24;
+  return (
+    <div style={{
+      width: size, height: size, minWidth: size,
+      borderRadius: 16, background: bg,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      color,
+      boxShadow: "0 10px 30px rgba(15,23,42,0.08)",
+      flexShrink: 0,
+    }}>
+      {typeof Icon === "string"
+        ? <span style={{ fontSize: size <= 44 ? 20 : 26, lineHeight: 1 }}>{Icon}</span>
+        : <Icon size={iconSize} strokeWidth={1.8} color={color} />}
+    </div>
+  );
 }
 
 function AnimSection({ children, className = "", delay = 0 }) {
@@ -145,60 +214,214 @@ function AnimSection({ children, className = "", delay = 0 }) {
   );
 }
 
-function Navbar({ scrolled }) {
+function Navbar({ scrolled, activePage, onNavigate }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(window.innerWidth < 920);
+
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth < 920);
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  const navBg = scrolled ? "rgba(255,255,255,0.97)" : "transparent";
+  const navTextColor = scrolled ? "rgba(15,23,42,0.78)" : "rgba(15,23,42,0.85)";
+
+  const handleLink = (e, l) => {
+    e.preventDefault();
+    setMenuOpen(false);
+    if (l.page === "articles") { onNavigate("articles"); return; }
+    if (l.page === "eservices") { onNavigate("eservices"); return; }
+    onNavigate("home");
+    setTimeout(() => {
+      const el = document.querySelector(l.href);
+      if (el) el.scrollIntoView({ behavior: "smooth" });
+    }, 60);
+  };
+
   return (
     <nav style={{
       position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
-      background: scrolled ? "rgba(255,255,255,0.96)" : "transparent",
-      backdropFilter: scrolled ? "blur(12px)" : "none",
+      background: navBg,
+      backdropFilter: scrolled ? "blur(14px)" : "none",
       borderBottom: scrolled ? "1px solid rgba(15,23,42,0.08)" : "none",
       transition: "all 0.4s ease",
-      padding: "0 2rem",
     }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-          <div style={{
-            width: 42, height: 42, borderRadius: 10,
-            overflow: "hidden",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            boxShadow: "0 0 20px rgba(0,0,0,0.05)",
-            background: "transparent",
-          }}>
-            <img src={siteLogo} alt="ADETIC logo" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72, padding: "0 2rem" }}>
+        {/* Logo */}
+        <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => onNavigate("home")}>
+          <div style={{ width: 42, height: 42, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
+            <img src={siteLogo} alt="ADETIC" style={{ width: "100%", height: "100%", objectFit: "cover" }} />
           </div>
           <div>
-            <div style={{ color: scrolled ? PRIMARY_COLOR : HERO_TEXT_COLOR, fontWeight: 800, fontSize: 15, letterSpacing: 1, lineHeight: 1 }}>ADETIC</div>
-            <div style={{ color: scrolled ? SECONDARY_COLOR : HERO_TEXT_COLOR, fontSize: 9, letterSpacing: 2, fontWeight: 600 }}>TCHAD · NUMÉRIQUE</div>
+            <div style={{ color: scrolled ? TEXT_COLOR : HERO_TEXT_COLOR, fontWeight: 800, fontSize: 15, letterSpacing: 1, lineHeight: 1 }}>ADETIC</div>
+            <div style={{ color: scrolled ? SECONDARY_COLOR : "rgba(15,23,42,0.55)", fontSize: 9, letterSpacing: 2, fontWeight: 600 }}>TCHAD · NUMÉRIQUE</div>
           </div>
         </div>
 
-        <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
-          {NAV_LINKS.map(l => (
-            <a key={l.label} href={l.href} style={{
-              color: scrolled ? "rgba(255,255,255,0.75)" : "rgba(15,23,42,0.8)", textDecoration: "none",
-              fontSize: 13, fontWeight: 500, padding: "6px 10px",
-              borderRadius: 6, transition: "all 0.2s",
-              display: window.innerWidth < 900 ? "none" : "block",
-            }}
-              onMouseEnter={e => { e.target.style.color = "#00C9A7"; e.target.style.background = "rgba(0,201,167,0.1)"; }}
-              onMouseLeave={e => { e.target.style.color = scrolled ? "rgba(255,255,255,0.75)" : "rgba(15,23,42,0.8)"; e.target.style.background = "transparent"; }}
-            >{l.label}</a>
-          ))}
-          <a href="#contact" style={{
-            background: "rgba(255,255,255,0.12)",
-            color: PRIMARY_COLOR, textDecoration: "none",
-            padding: "8px 18px", borderRadius: 8,
-            fontSize: 13, fontWeight: 700,
-            boxShadow: "0 4px 15px rgba(255,255,255,0.12)",
-            transition: "all 0.2s",
-          }}
-            onMouseEnter={e => { e.target.style.background = `linear-gradient(135deg, ${SECONDARY_COLOR}, ${SECONDARY_COLOR_ALT})`; e.target.style.color = PRIMARY_COLOR; }}
-            onMouseLeave={e => { e.target.style.background = "rgba(255,255,255,0.12)"; e.target.style.color = PRIMARY_COLOR; }}
-          >Contactez-nous</a>
-        </div>
+        {/* Desktop links */}
+        {!isMobile && (
+          <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
+            {NAV_LINKS.map(l => {
+              const isActive = activePage === l.page && (l.page === "articles" || l.page === "eservices");
+              const isEService = l.page === "eservices";
+              return (
+                <a key={l.label} href={l.href}
+                  style={{
+                    color: isEService ? SECONDARY_COLOR : (isActive ? SECONDARY_COLOR : navTextColor),
+                    textDecoration: "none", fontSize: 13,
+                    fontWeight: isEService || isActive ? 700 : 500,
+                    padding: "7px 12px", borderRadius: 8, transition: "all 0.2s",
+                    background: isEService ? "rgba(0,201,167,0.1)" : (isActive ? "rgba(0,201,167,0.1)" : "transparent"),
+                    border: isEService ? "1px solid rgba(0,201,167,0.28)" : "1px solid transparent",
+                  }}
+                  onClick={e => handleLink(e, l)}
+                  onMouseEnter={e => { e.currentTarget.style.color = SECONDARY_COLOR; e.currentTarget.style.background = "rgba(0,201,167,0.12)"; }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.color = isEService ? SECONDARY_COLOR : (isActive ? SECONDARY_COLOR : navTextColor);
+                    e.currentTarget.style.background = isEService || isActive ? "rgba(0,201,167,0.1)" : "transparent";
+                  }}
+                >{l.label}</a>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Mobile hamburger */}
+        {isMobile && (
+          <button onClick={() => setMenuOpen(o => !o)} style={{
+            background: "transparent", border: "none", cursor: "pointer",
+            padding: 8, display: "flex", flexDirection: "column", gap: 5,
+          }}>
+            {[0, 1, 2].map(i => (
+              <span key={i} style={{
+                display: "block", width: 24, height: 2, borderRadius: 2,
+                background: scrolled ? TEXT_COLOR : "rgba(15,23,42,0.8)",
+                transition: "all 0.3s",
+                transform: menuOpen
+                  ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                  : i === 1 ? "scaleX(0)"
+                  : "rotate(-45deg) translate(5px, -5px)"
+                  : "none",
+              }} />
+            ))}
+          </button>
+        )}
       </div>
+
+      {/* Mobile dropdown */}
+      {isMobile && menuOpen && (
+        <div style={{
+          background: "rgba(255,255,255,0.98)", backdropFilter: "blur(14px)",
+          borderTop: "1px solid rgba(15,23,42,0.08)", padding: "8px 2rem 20px",
+        }}>
+          {NAV_LINKS.map(l => {
+            const isActive = activePage === l.page && (l.page === "articles" || l.page === "eservices");
+            return (
+              <a key={l.label} href={l.href}
+                style={{
+                  display: "block", color: isActive ? SECONDARY_COLOR : TEXT_COLOR,
+                  textDecoration: "none", fontSize: 15, fontWeight: isActive ? 700 : 500,
+                  padding: "14px 4px", borderBottom: "1px solid rgba(15,23,42,0.06)",
+                }}
+                onClick={e => handleLink(e, l)}
+              >{l.label}</a>
+            );
+          })}
+        </div>
+      )}
     </nav>
+  );
+}
+
+function TDVisual() {
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setTick(t => t + 1), 50);
+    return () => clearInterval(id);
+  }, []);
+  const icons = [
+    { Icon: Monitor, color: "#00C9A7" },
+    { Icon: Radio, color: "#4F8EF7" },
+    { Icon: Shield, color: "#F7B731" },
+    { Icon: Database, color: "#FC5C65" },
+  ];
+  return (
+    <div style={{
+      width: 420, height: 420,
+      background: "linear-gradient(145deg, #0a1628 0%, #050A19 70%, #0d1a3d 100%)",
+      borderRadius: 32,
+      position: "relative",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      overflow: "hidden",
+      boxShadow: "0 30px 80px rgba(5,10,25,0.5), 0 0 0 1px rgba(0,201,167,0.2)",
+    }}>
+      <div style={{
+        position: "absolute", inset: 0,
+        backgroundImage: "linear-gradient(rgba(0,201,167,0.05) 1px, transparent 1px), linear-gradient(90deg, rgba(0,201,167,0.05) 1px, transparent 1px)",
+        backgroundSize: "28px 28px",
+      }} />
+      <div style={{
+        position: "absolute", left: 0, right: 0, height: 120,
+        background: "linear-gradient(180deg, transparent, rgba(0,201,167,0.05), transparent)",
+        top: `${((tick * 2) % 540) - 120}px`,
+      }} />
+      {[280, 210, 140].map((size, i) => (
+        <div key={i} style={{
+          position: "absolute", width: size, height: size, borderRadius: "50%",
+          border: `${i === 2 ? 2 : 1}px ${i === 1 ? "dashed" : "solid"} rgba(${i === 1 ? "79,142,247" : "0,201,167"},${i === 2 ? 0.6 : i === 0 ? 0.12 : 0.22})`,
+          animation: `spin ${18 + i * 7}s linear infinite ${i % 2 ? "reverse" : ""}`,
+        }} />
+      ))}
+      <div style={{
+        position: "absolute", width: 120, height: 120, borderRadius: "50%",
+        background: "radial-gradient(circle, rgba(0,201,167,0.22) 0%, transparent 70%)",
+        filter: "blur(20px)",
+        animation: "tdPulse 3s ease-in-out infinite",
+      }} />
+      <div style={{
+        position: "relative", zIndex: 10,
+        animation: "tdFloat 4s ease-in-out infinite",
+        display: "flex", alignItems: "baseline",
+      }}>
+        <span style={{
+          color: "#00C9A7", fontSize: 90, fontWeight: 900, letterSpacing: -3,
+          fontFamily: "'Segoe UI', system-ui, sans-serif",
+          animation: "tdGlow 2.5s ease-in-out infinite",
+          display: "inline-block",
+        }}>.</span>
+        <span style={{
+          color: "#ffffff", fontSize: 90, fontWeight: 900, letterSpacing: -3,
+          fontFamily: "'Segoe UI', system-ui, sans-serif",
+          animation: "tdGlow 2.5s ease-in-out infinite 0.4s",
+          display: "inline-block",
+        }}>td</span>
+      </div>
+      {icons.map(({ Icon, color }, i) => {
+        const angle = (i / 4) * 2 * Math.PI + tick * 0.01;
+        const r = 155;
+        return (
+          <div key={i} style={{
+            position: "absolute",
+            left: `calc(50% + ${Math.cos(angle) * r}px - 20px)`,
+            top: `calc(50% + ${Math.sin(angle) * r}px - 20px)`,
+            width: 40, height: 40,
+            background: "rgba(10,22,40,0.92)",
+            border: `1px solid ${color}55`,
+            borderRadius: 10,
+            display: "flex", alignItems: "center", justifyContent: "center",
+            boxShadow: `0 0 16px ${color}30`,
+          }}>
+            <Icon size={18} strokeWidth={1.8} color={color} />
+          </div>
+        );
+      })}
+      <div style={{ position: "absolute", bottom: 0, left: 0, right: 0, height: 3, background: "linear-gradient(90deg, transparent, #00C9A7, #4F8EF7, transparent)" }} />
+      <div style={{ position: "absolute", top: 22, left: 24, color: "rgba(79,142,247,0.55)", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>ADETIC</div>
+      <div style={{ position: "absolute", bottom: 22, right: 24, color: "rgba(0,201,167,0.55)", fontSize: 10, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase" }}>TCHAD</div>
+    </div>
   );
 }
 
@@ -303,67 +526,9 @@ function HeroSection() {
             </div>
           </div>
 
-          {/* Right: Tech visual */}
-          <div style={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center" }}>
-            {/* Decorative hero image (replaced with td logo) */}
-            <img src={tdLogo} alt="TD" style={{
-              position: "absolute",
-              right: -10,
-              width: 420,
-              height: 420,
-              objectFit: "contain",
-              borderRadius: 24,
-              boxShadow: "0 20px 50px rgba(15,23,42,0.08)",
-              zIndex: 0,
-              opacity: 0.98,
-              background: "#fff",
-              padding: 24,
-            }} />
-            <div style={{
-              width: 320, height: 320, borderRadius: "50%",
-              border: "1px solid rgba(0,201,167,0.2)",
-              position: "relative", display: "flex", alignItems: "center", justifyContent: "center",
-            }}>
-              <div style={{
-                width: 240, height: 240, borderRadius: "50%",
-                border: "1px dashed rgba(79,142,247,0.3)",
-                position: "absolute",
-                animation: "spin 20s linear infinite",
-              }} />
-              <div style={{
-                width: 160, height: 160, borderRadius: "50%",
-                border: "2px solid rgba(0,201,167,0.4)",
-                position: "absolute",
-                animation: "spin 10s linear infinite reverse",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}>
-                <div style={{
-                  width: 90, height: 90, borderRadius: "50%",
-                  background: "linear-gradient(135deg, #00C9A7, #4F8EF7)",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  boxShadow: "0 0 40px rgba(0,201,167,0.5)",
-                  fontSize: 36,
-                }}>🇹🇩</div>
-              </div>
-              {/* Orbiting dots */}
-              {["💻", "📡", "🔒", "📊"].map((em, i) => {
-                const angle = (i / 4) * 2 * Math.PI + tick * 0.01;
-                const r = 150;
-                return (
-                  <div key={i} style={{
-                    position: "absolute",
-                    left: `calc(50% + ${Math.cos(angle) * r}px - 18px)`,
-                    top: `calc(50% + ${Math.sin(angle) * r}px - 18px)`,
-                    width: 36, height: 36,
-                    background: "rgba(0,0,0,0.6)",
-                    border: "1px solid rgba(0,201,167,0.3)",
-                    borderRadius: 8,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    fontSize: 18,
-                  }}>{em}</div>
-                );
-              })}
-            </div>
+          {/* Right: .td animated visual */}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+            <TDVisual />
           </div>
         </div>
 
@@ -383,8 +548,8 @@ function HeroSection() {
               textAlign: "center",
               borderRight: i < 3 ? "1px solid rgba(0,201,167,0.1)" : "none",
             }}>
-              <div style={{ fontSize: 24, marginBottom: 6 }}>{c.icon}</div>
-              <div style={{ color: "#00C9A7", fontWeight: 900, fontSize: 26 }}>{c.val}</div>
+              <IconBadge icon={c.icon} bg="rgba(255,255,255,0.08)" color="#fff" />
+              <div style={{ color: "#00C9A7", fontWeight: 900, fontSize: 26, marginTop: 10 }}>{c.val}</div>
               <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 12, marginTop: 4 }}>{c.label}</div>
             </div>
           ))}
@@ -397,27 +562,30 @@ function HeroSection() {
         @keyframes pulse { 0%,100% { opacity:1; box-shadow:0 0 8px #00C9A7; } 50% { opacity:0.5; box-shadow:0 0 3px #00C9A7; } }
         @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-10px); } }
         @keyframes fadeSlide { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+        @keyframes tdPulse { 0%,100% { opacity:0.5; } 50% { opacity:1; } }
+        @keyframes tdFloat { 0%,100% { transform:translateY(0px); } 50% { transform:translateY(-14px); } }
+        @keyframes tdGlow { 0%,100% { text-shadow:0 0 20px rgba(0,201,167,0.4),0 0 40px rgba(0,201,167,0.15); } 50% { text-shadow:0 0 40px rgba(0,201,167,0.9),0 0 80px rgba(0,201,167,0.5),0 0 120px rgba(79,142,247,0.3); } }
       `}</style>
     </section>
   );
 }
 
-function ActualitesSection() {
-  const [actualites, setActualites] = useState(ACTUALITES);
+function ActualitesSection({ actualites, loading, fetchError }) {
   const [active, setActive] = useState(0);
+  const [openArticle, setOpenArticle] = useState(null);
   const ref = useRef(null);
   const inView = useInView(ref);
+  const hasActualites = actualites && actualites.length > 0;
+  const activeArticle = hasActualites ? actualites[active] : null;
+  const activeColor = activeArticle?.color || SECONDARY_COLOR;
 
   useEffect(() => {
-    async function loadActualites() {
-      const data = await fetchActualites();
-      if (data && data.length > 0) {
-        setActualites(data);
-        setActive(0);
-      }
+    if (hasActualites && active >= actualites.length) {
+      setActive(0);
     }
-    loadActualites();
-  }, []);
+  }, [actualites, active, hasActualites]);
+
+  const listItems = hasActualites ? actualites : [];
 
   return (
     <section id="actualites" ref={ref} style={{
@@ -435,10 +603,13 @@ function ActualitesSection() {
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
           {/* Left: list */}
           <div style={{ background: PANEL_BG }}>
-            {actualites.map((a, i) => (
+            {listItems.map((a, i) => (
               <AnimSection key={i} delay={i * 80}>
                 <div
-                  onClick={() => setActive(i)}
+                  onClick={() => {
+                    setActive(i);
+                    setOpenArticle(a);
+                  }}
                   style={{
                     padding: "24px 28px",
                     cursor: "pointer",
@@ -449,7 +620,11 @@ function ActualitesSection() {
                   }}
                 >
                   <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <span style={{ fontSize: 22, marginTop: 6 }}>{a.icon}</span>
+                    <IconBadge
+                      icon={a.icon}
+                      color={a.color}
+                      bg={`rgba(${a.color === "#00C9A7" ? "0,201,167" : a.color === "#4F8EF7" ? "79,142,247" : a.color === "#F7B731" ? "247,183,49" : a.color === "#FC5C65" ? "252,92,101" : "15,23,42"},0.15)`}
+                    />
                     {a.image && (
                       <img src={a.image} alt={a.title} loading="lazy" style={{ width: 84, height: 56, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
                     )}
@@ -464,35 +639,879 @@ function ActualitesSection() {
                 </div>
               </AnimSection>
             ))}
+            {!hasActualites && (
+              <div style={{ padding: 40, color: MUTED_TEXT, textAlign: "center" }}>
+                {fetchError
+                  ? `Erreur Supabase : ${fetchError}`
+                  : loading
+                    ? "Chargement des actualités en cours..."
+                    : "Aucune actualité trouvée pour le moment."
+                }
+              </div>
+            )}
           </div>
 
           {/* Right: detail */}
           <div style={{
             padding: "40px",
-            background: `linear-gradient(135deg, rgba(${actualites[active].color === "#00C9A7" ? "0,201,167" : actualites[active].color === "#4F8EF7" ? "79,142,247" : actualites[active].color === "#F7B731" ? "247,183,49" : "252,92,101"},0.08) 0%, #f8fafc 100%)`,
+            background: `linear-gradient(135deg, rgba(${activeColor === "#00C9A7" ? "0,201,167" : activeColor === "#4F8EF7" ? "79,142,247" : activeColor === "#F7B731" ? "247,183,49" : "252,92,101"},0.08) 0%, #f8fafc 100%)`,
             transition: "all 0.4s",
             display: "flex", flexDirection: "column", justifyContent: "center",
             border: "1px solid rgba(15,23,42,0.08)",
             borderRadius: 20,
           }}>
-            {/* Image preview for the selected news */}
-            {actualites[active].image && (
-              <img src={actualites[active].image} alt={actualites[active].title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 12, marginBottom: 18 }} />
+            {!activeArticle ? (
+              <div style={{ padding: 40, color: MUTED_TEXT, textAlign: "center" }}>
+                {loading ? "Chargement des détails de l'article..." : "Sélectionnez une actualité pour voir les détails."}
+              </div>
+            ) : (
+              <>
+                {activeArticle.image && (
+                  <img src={activeArticle.image} alt={activeArticle.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 12, marginBottom: 18 }} />
+                )}
+                <div style={{ marginBottom: 20 }}>
+                  <IconBadge
+                    icon={activeArticle.icon}
+                    size={54}
+                    color={activeArticle.color}
+                    bg={`rgba(${activeArticle.color === "#00C9A7" ? "0,201,167" : activeArticle.color === "#4F8EF7" ? "79,142,247" : activeArticle.color === "#F7B731" ? "247,183,49" : "252,92,101"},0.12)`}
+                  />
+                </div>
+                <span style={{ fontSize: 11, color: activeArticle.color, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, display: "block" }}>
+                  {activeArticle.category} — {activeArticle.date}
+                </span>
+                <h3 style={{ color: BG_COLOR, fontSize: 22, fontWeight: 800, lineHeight: 1.4, marginBottom: 16 }}>{activeArticle.title}</h3>
+                <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.7 }}>{activeArticle.excerpt}</p>
+              </>
             )}
-            <div style={{ fontSize: 48, marginBottom: 20 }}>{actualites[active].icon}</div>
-            <span style={{ fontSize: 11, color: actualites[active].color, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, display: "block" }}>
-              {actualites[active].category} — {actualites[active].date}
-            </span>
-            <h3 style={{ color: BG_COLOR, fontSize: 22, fontWeight: 800, lineHeight: 1.4, marginBottom: 16 }}>{actualites[active].title}</h3>
-            <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.7 }}>{actualites[active].excerpt}</p>
-            <a href="#contact" style={{
-              marginTop: 28, display: "inline-flex", alignItems: "center", gap: 8,
-              color: ACTUALITES[active].color, textDecoration: "none",
-              fontSize: 14, fontWeight: 700,
-              transition: "gap 0.2s",
-            }}>Lire la suite <span>→</span></a>
+            {activeArticle && (
+              <button style={{
+                marginTop: 28, display: "inline-flex", alignItems: "center", gap: 8,
+                color: activeArticle.color, background: "transparent", border: "none",
+                padding: 0, cursor: "pointer", fontSize: 14, fontWeight: 700,
+                textDecoration: "underline", transition: "gap 0.2s",
+              }} onClick={() => setOpenArticle(activeArticle)}>Lire la suite <span>→</span></button>
+            )}
           </div>
         </div>
+      </div>
+
+      {openArticle && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 200,
+          display: "flex", alignItems: "center", justifyContent: "center",
+          background: "rgba(15,23,42,0.7)", padding: "30px",
+        }}>
+          <div style={{
+            width: "100%", maxWidth: 960, maxHeight: "calc(100vh - 60px)",
+            overflowY: "auto", background: "#f8fafc",
+            borderRadius: 24, padding: "32px", position: "relative",
+            boxShadow: "0 30px 80px rgba(15,23,42,0.35)",
+          }}>
+            <button onClick={() => setOpenArticle(null)} style={{
+              position: "absolute", top: 20, right: 20, border: "none",
+              background: "rgba(15,23,42,0.08)", color: BG_COLOR,
+              width: 40, height: 40, borderRadius: 12, cursor: "pointer", fontWeight: 700,
+            }}>×</button>
+            {openArticle.image && (
+              <img src={openArticle.image} alt={openArticle.title} style={{ width: "100%", height: 320, objectFit: "cover", borderRadius: 20, marginBottom: 24 }} />
+            )}
+            <span style={{ fontSize: 12, color: openArticle.color, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{openArticle.category}</span>
+            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 2.8rem)", fontWeight: 900, margin: "14px 0 12px" }}>{openArticle.title}</h2>
+            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
+              <span style={{ color: "rgba(15,23,42,0.55)", fontSize: 14 }}>{openArticle.date}</span>
+              <span style={{ color: openArticle.color, fontSize: 14, fontWeight: 700 }}>{openArticle.icon}</span>
+            </div>
+            <p style={{ color: MUTED_TEXT, fontSize: 16, lineHeight: 1.8, marginBottom: 20 }}>{openArticle.content || openArticle.excerpt}</p>
+            <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.75 }}>{openArticle.excerpt}</p>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ArticlesPage({ actualites, loading, fetchError, onBack }) {
+  const [openArticle, setOpenArticle] = useState(null);
+
+  return (
+    <section id="articles-page" style={{ background: SITE_BG_COLOR, padding: "100px 2rem", minHeight: "100vh" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto" }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, marginBottom: 40 }}>
+          <div>
+            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>📰 Toutes les actualités</span>
+            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 3rem)", fontWeight: 900, margin: "14px 0 10px" }}>Page spéciale des articles Supabase</h2>
+            <p style={{ color: MUTED_TEXT, maxWidth: 680, fontSize: 16 }}>Toutes les actualités chargées depuis la base de données Supabase sont affichées ici avec leurs images, catégories et extraits.</p>
+          </div>
+          <button onClick={onBack} style={{
+            background: "transparent",
+            border: "1px solid rgba(15,23,42,0.12)",
+            borderRadius: 12,
+            color: BG_COLOR,
+            padding: "14px 20px",
+            cursor: "pointer",
+            fontWeight: 700,
+          }}>Retour à l'accueil</button>
+        </div>
+
+        {loading ? (
+          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Chargement des actualités...</div>
+        ) : fetchError ? (
+          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>
+            <strong>Erreur de chargement :</strong> {fetchError}
+          </div>
+        ) : actualites.length === 0 ? (
+          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Aucun article trouvé dans la base de données Supabase.</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 24 }}>
+            {actualites.map((article, index) => (
+              <div key={index} style={{ background: "#fff", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(15,23,42,0.08)", boxShadow: "0 18px 50px rgba(15,23,42,0.08)" }}>
+                {article.image ? (
+                  <img src={article.image} alt={article.title} style={{ width: "100%", height: 220, objectFit: "cover" }} />
+                ) : (
+                  <div style={{ width: "100%", height: 220, background: "rgba(15,23,42,0.04)" }} />
+                )}
+                <div style={{ padding: 28 }}>
+                  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
+                    <IconBadge icon={article.icon || "📰"} color={article.color || "#00C9A7"} bg="rgba(0,201,167,0.12)" />
+                    <div>
+                      <div style={{ color: article.color || SECONDARY_COLOR, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>{article.category || "Actualité"}</div>
+                      <div style={{ color: MUTED_TEXT, fontSize: 13 }}>{article.date}</div>
+                    </div>
+                  </div>
+                  <h3 style={{ color: BG_COLOR, fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{article.title}</h3>
+                  <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>{article.excerpt}</p>
+                  <button onClick={() => setOpenArticle(article)} style={{
+                    color: article.color || SECONDARY_COLOR,
+                    background: "transparent",
+                    border: "none",
+                    cursor: "pointer",
+                    fontWeight: 700,
+                    padding: 0,
+                  }}>Voir l'article →</button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {openArticle && (
+        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div style={{ width: "100%", maxWidth: 920, background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative" }}>
+            <button onClick={() => setOpenArticle(null)} style={{ position: "absolute", top: 18, right: 18, border: "none", background: "rgba(15,23,42,0.08)", borderRadius: 12, width: 42, height: 42, cursor: "pointer", fontSize: 18 }}>×</button>
+            {openArticle.image && <img src={openArticle.image} alt={openArticle.title} style={{ width: "100%", height: 320, objectFit: "cover" }} />}
+            <div style={{ padding: 32 }}>
+              <span style={{ color: openArticle.color || SECONDARY_COLOR, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5 }}>{openArticle.category}</span>
+              <h2 style={{ color: BG_COLOR, fontSize: 28, fontWeight: 900, margin: "14px 0 18px" }}>{openArticle.title}</h2>
+              <p style={{ color: MUTED_TEXT, fontSize: 16, lineHeight: 1.8, marginBottom: 24 }}>{openArticle.content || openArticle.excerpt}</p>
+              <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.8 }}>{openArticle.excerpt}</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function ServiceCard({ service, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  const Icon = service.icon;
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: hovered ? service.bg : "#fff",
+        border: `1px solid ${hovered ? service.color : "rgba(15,23,42,0.08)"}`,
+        borderRadius: 16, padding: 32, cursor: "pointer",
+        transition: "all 0.3s",
+        transform: hovered ? "translateY(-4px)" : "none",
+        boxShadow: hovered ? `0 20px 40px ${service.color}20` : "0 2px 8px rgba(15,23,42,0.04)",
+      }}
+    >
+      <div style={{
+        width: 56, height: 56, borderRadius: 16,
+        background: hovered ? service.color : service.bg,
+        display: "flex", alignItems: "center", justifyContent: "center",
+        marginBottom: 20, transition: "all 0.3s",
+      }}>
+        {typeof Icon === "string"
+          ? <span style={{ fontSize: 26 }}>{Icon}</span>
+          : <Icon size={26} strokeWidth={1.8} color={hovered ? "#fff" : service.color} />}
+      </div>
+      <div style={{ color: service.color, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, marginBottom: 8, textTransform: "uppercase" }}>{service.subtitle}</div>
+      <h3 style={{ color: TEXT_COLOR, fontSize: 18, fontWeight: 800, margin: "0 0 12px" }}>{service.title}</h3>
+      <p style={{ color: MUTED_TEXT, fontSize: 14, lineHeight: 1.6, margin: 0 }}>{service.description}</p>
+      <div style={{ marginTop: 24, color: service.color, fontSize: 13, fontWeight: 600, display: "flex", alignItems: "center", gap: 6 }}>
+        Commencer la demande
+        <span style={{ transition: "transform 0.2s", transform: hovered ? "translateX(4px)" : "none", display: "inline-block" }}>→</span>
+      </div>
+    </div>
+  );
+}
+
+function FormField({ label, hint, children }) {
+  return (
+    <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <label style={{ color: TEXT_COLOR, fontSize: 13, fontWeight: 600 }}>{label}</label>
+      {hint && <span style={{ color: MUTED_TEXT, fontSize: 11 }}>{hint}</span>}
+      {children}
+    </div>
+  );
+}
+
+function SuccessMessage({ title, message }) {
+  return (
+    <div style={{
+      textAlign: "center", padding: "60px 40px",
+      background: "linear-gradient(135deg, rgba(0,201,167,0.06), rgba(79,142,247,0.06))",
+      border: "1px solid rgba(0,201,167,0.2)", borderRadius: 20,
+    }}>
+      <div style={{ fontSize: 56, marginBottom: 20 }}>✅</div>
+      <h3 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 12px" }}>{title}</h3>
+      <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.7, maxWidth: 480, margin: "0 auto" }}>{message}</p>
+    </div>
+  );
+}
+
+function DomainForm() {
+  const [form, setForm] = useState({
+    domaine_souhaite: "", type_entite: "", nom_organisation: "",
+    nom_contact: "", email: "", telephone: "", adresse: "", usage_description: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const { error: err } = await submitDemandeDomaine(form);
+    if (!err) {
+      await sendEmailNotification(
+        `Demande nom de domaine .td — ${form.domaine_souhaite}`,
+        `Domaine souhaité : ${form.domaine_souhaite}\nType d'entité : ${form.type_entite}\nOrganisation : ${form.nom_organisation}\nContact : ${form.nom_contact}\nEmail : ${form.email}\nTéléphone : ${form.telephone}\nAdresse : ${form.adresse}\n\nUsage prévu :\n${form.usage_description}`,
+        form.email
+      );
+      setSuccess(true);
+    } else {
+      setError("Une erreur est survenue. Veuillez réessayer.");
+    }
+    setSubmitting(false);
+  };
+  if (success) return <SuccessMessage title="Demande soumise avec succès !" message="Votre demande de nom de domaine .td a été enregistrée. Nos équipes vous contacteront dans les 48 heures ouvrables." />;
+  return (
+    <div>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Globe size={22} color={SECONDARY_COLOR} strokeWidth={2} /> Demande de Nom de Domaine .td
+        </h2>
+        <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Remplissez ce formulaire pour demander l'enregistrement d'un nom de domaine sous l'extension nationale .td</p>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <FormField label="Nom de domaine souhaité *" hint="Exemple : monentreprise.td">
+            <input type="text" required value={form.domaine_souhaite} onChange={handleChange("domaine_souhaite")} placeholder="mondomaine.td" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Type d'entité *">
+            <select required value={form.type_entite} onChange={handleChange("type_entite")} style={FORM_INPUT_STYLE}>
+              <option value="">Sélectionnez...</option>
+              <option value="Commerciale">Commerciale</option>
+              <option value="Gouvernementale">Gouvernementale</option>
+              <option value="Associative">Associative / ONG</option>
+              <option value="Personnelle">Personnelle</option>
+              <option value="Académique">Académique / Éducative</option>
+            </select>
+          </FormField>
+          <FormField label="Nom de l'organisation *">
+            <input type="text" required value={form.nom_organisation} onChange={handleChange("nom_organisation")} placeholder="Nom de votre organisation" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Nom du contact responsable *">
+            <input type="text" required value={form.nom_contact} onChange={handleChange("nom_contact")} placeholder="Nom et prénom" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Email *">
+            <input type="email" required value={form.email} onChange={handleChange("email")} placeholder="contact@exemple.com" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Téléphone *">
+            <input type="tel" required value={form.telephone} onChange={handleChange("telephone")} placeholder="+235 XX XX XX XX" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Adresse *">
+              <input type="text" required value={form.adresse} onChange={handleChange("adresse")} placeholder="Adresse complète" style={FORM_INPUT_STYLE} />
+            </FormField>
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Description de l'usage prévu *">
+              <textarea required value={form.usage_description} onChange={handleChange("usage_description")} placeholder="Décrivez l'usage que vous ferez de ce nom de domaine (site web, email professionnel, service en ligne...)" style={{ ...FORM_INPUT_STYLE, minHeight: 100, resize: "vertical" }} />
+            </FormField>
+          </div>
+        </div>
+        {error && <div style={{ color: "#FC5C65", fontSize: 14, marginTop: 16 }}>{error}</div>}
+        <button type="submit" disabled={submitting} style={{
+          marginTop: 28, background: submitting ? "rgba(0,201,167,0.5)" : SECONDARY_COLOR,
+          color: "#fff", border: "none", padding: "14px 32px", borderRadius: 10,
+          fontWeight: 700, fontSize: 15, cursor: submitting ? "not-allowed" : "pointer",
+          boxShadow: "0 8px 30px rgba(0,201,167,0.25)", transition: "all 0.3s",
+        }}>
+          {submitting ? "Envoi en cours..." : "Soumettre la demande →"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function EquipmentForm() {
+  const [form, setForm] = useState({
+    type_equipement: "", quantite: "", nom_organisation: "", localisation_ville: "",
+    adresse_exacte: "", responsable_nom: "", responsable_email: "",
+    responsable_telephone: "", date_souhaitee: "", description_besoins: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const { error: err } = await submitDemandeEquipement({ ...form, quantite: Number(form.quantite) || null });
+    if (!err) {
+      await sendEmailNotification(
+        `Demande installation équipements — ${form.nom_organisation}`,
+        `Type d'équipement : ${form.type_equipement}\nQuantité : ${form.quantite || "—"}\nOrganisation : ${form.nom_organisation}\nVille : ${form.localisation_ville}\nAdresse : ${form.adresse_exacte}\nResponsable : ${form.responsable_nom}\nEmail : ${form.responsable_email}\nTéléphone : ${form.responsable_telephone}\nDate souhaitée : ${form.date_souhaitee || "—"}\n\nBesoins :\n${form.description_besoins}`,
+        form.responsable_email
+      );
+      setSuccess(true);
+    } else {
+      setError("Une erreur est survenue. Veuillez réessayer.");
+    }
+    setSubmitting(false);
+  };
+  if (success) return <SuccessMessage title="Demande enregistrée !" message="Votre demande d'installation d'équipements a été soumise. Un technicien ADETIC vous contactera sous 48 heures ouvrables." />;
+  return (
+    <div>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Monitor size={22} color={SECONDARY_COLOR_ALT} strokeWidth={2} /> Demande d'Installation d'Équipements
+        </h2>
+        <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Soumettez une demande d'installation d'équipements réseau ou de télécommunications sur votre site</p>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <FormField label="Type d'équipement *">
+            <select required value={form.type_equipement} onChange={handleChange("type_equipement")} style={FORM_INPUT_STYLE}>
+              <option value="">Sélectionnez...</option>
+              <option value="Routeur">Routeur</option>
+              <option value="Switch">Switch / Commutateur</option>
+              <option value="Point d'accès WiFi">Point d'accès WiFi</option>
+              <option value="Câblage réseau">Câblage réseau</option>
+              <option value="Serveur">Serveur</option>
+              <option value="Antenne">Antenne / Station de base</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </FormField>
+          <FormField label="Quantité souhaitée">
+            <input type="number" min="1" value={form.quantite} onChange={handleChange("quantite")} placeholder="Ex: 2" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Nom de l'organisation / Institution *">
+            <input type="text" required value={form.nom_organisation} onChange={handleChange("nom_organisation")} placeholder="Nom de votre organisation" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Ville / Localisation *">
+            <input type="text" required value={form.localisation_ville} onChange={handleChange("localisation_ville")} placeholder="N'Djamena, Moundou..." style={FORM_INPUT_STYLE} />
+          </FormField>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Adresse exacte du site d'installation *">
+              <input type="text" required value={form.adresse_exacte} onChange={handleChange("adresse_exacte")} placeholder="Adresse complète" style={FORM_INPUT_STYLE} />
+            </FormField>
+          </div>
+          <FormField label="Responsable technique — Nom *">
+            <input type="text" required value={form.responsable_nom} onChange={handleChange("responsable_nom")} placeholder="Nom et prénom" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Responsable technique — Email *">
+            <input type="email" required value={form.responsable_email} onChange={handleChange("responsable_email")} placeholder="email@exemple.com" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Téléphone du responsable">
+            <input type="tel" value={form.responsable_telephone} onChange={handleChange("responsable_telephone")} placeholder="+235 XX XX XX XX" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Date souhaitée d'intervention">
+            <input type="date" value={form.date_souhaitee} onChange={handleChange("date_souhaitee")} style={FORM_INPUT_STYLE} />
+          </FormField>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Description des besoins *">
+              <textarea required value={form.description_besoins} onChange={handleChange("description_besoins")} placeholder="Décrivez votre besoin en détail (infrastructure existante, nombre d'utilisateurs, objectifs...)" style={{ ...FORM_INPUT_STYLE, minHeight: 100, resize: "vertical" }} />
+            </FormField>
+          </div>
+        </div>
+        {error && <div style={{ color: "#FC5C65", fontSize: 14, marginTop: 16 }}>{error}</div>}
+        <button type="submit" disabled={submitting} style={{
+          marginTop: 28, background: submitting ? "rgba(79,142,247,0.5)" : SECONDARY_COLOR_ALT,
+          color: "#fff", border: "none", padding: "14px 32px", borderRadius: 10,
+          fontWeight: 700, fontSize: 15, cursor: submitting ? "not-allowed" : "pointer",
+          boxShadow: "0 8px 30px rgba(79,142,247,0.25)", transition: "all 0.3s",
+        }}>
+          {submitting ? "Envoi en cours..." : "Soumettre la demande →"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function PanneForm() {
+  const [form, setForm] = useState({
+    type_panne: "", niveau_urgence: "", localisation: "", equipement_concerne: "",
+    nombre_utilisateurs_affectes: "", description_panne: "",
+    nom_declarant: "", email_declarant: "", telephone_declarant: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    const { error: err } = await submitDeclarationPanne({
+      ...form,
+      nombre_utilisateurs_affectes: Number(form.nombre_utilisateurs_affectes) || null,
+    });
+    if (!err) {
+      await sendEmailNotification(
+        `[${form.niveau_urgence.toUpperCase()}] Panne signalée — ${form.type_panne}`,
+        `Type de panne : ${form.type_panne}\nUrgence : ${form.niveau_urgence}\nLocalisation : ${form.localisation}\nÉquipement : ${form.equipement_concerne || "—"}\nUtilisateurs affectés : ${form.nombre_utilisateurs_affectes || "—"}\nDéclarant : ${form.nom_declarant}\nEmail : ${form.email_declarant}\nTéléphone : ${form.telephone_declarant || "—"}\n\nDescription :\n${form.description_panne}`,
+        form.email_declarant
+      );
+      setSuccess(true);
+    } else {
+      setError("Une erreur est survenue. Veuillez réessayer.");
+    }
+    setSubmitting(false);
+  };
+  if (success) return <SuccessMessage title="Panne signalée avec succès !" message="Votre déclaration de panne a été enregistrée. Nos équipes techniques interviendront selon le niveau d'urgence indiqué." />;
+  return (
+    <div>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 10 }}>
+          <AlertTriangle size={22} color="#FC5C65" strokeWidth={2} /> Déclaration de Panne Technique
+        </h2>
+        <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Signalez une panne technique pour une prise en charge rapide par nos équipes spécialisées</p>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <FormField label="Type de panne *">
+            <select required value={form.type_panne} onChange={handleChange("type_panne")} style={FORM_INPUT_STYLE}>
+              <option value="">Sélectionnez...</option>
+              <option value="Panne réseau">Panne réseau</option>
+              <option value="Équipement défaillant">Équipement défaillant</option>
+              <option value="Problème logiciel">Problème logiciel / Système</option>
+              <option value="Coupure électrique">Coupure électrique</option>
+              <option value="Problème de connectivité">Problème de connectivité Internet</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </FormField>
+          <FormField label="Niveau d'urgence *">
+            <select required value={form.niveau_urgence} onChange={handleChange("niveau_urgence")} style={FORM_INPUT_STYLE}>
+              <option value="">Sélectionnez...</option>
+              <option value="Normal">Normal — peut attendre</option>
+              <option value="Urgent">Urgent — impact significatif</option>
+              <option value="Critique">Critique — service totalement interrompu</option>
+            </select>
+          </FormField>
+          <FormField label="Localisation *">
+            <input type="text" required value={form.localisation} onChange={handleChange("localisation")} placeholder="Ville, quartier, bâtiment..." style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Équipement concerné">
+            <input type="text" value={form.equipement_concerne} onChange={handleChange("equipement_concerne")} placeholder="Nom / référence de l'équipement" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Nombre d'utilisateurs affectés">
+            <input type="number" min="0" value={form.nombre_utilisateurs_affectes} onChange={handleChange("nombre_utilisateurs_affectes")} placeholder="Ex: 50" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Description de la panne *">
+              <textarea required value={form.description_panne} onChange={handleChange("description_panne")} placeholder="Décrivez précisément la panne : symptômes observés, depuis quand, ce qui a été tenté..." style={{ ...FORM_INPUT_STYLE, minHeight: 120, resize: "vertical" }} />
+            </FormField>
+          </div>
+          <FormField label="Votre nom *">
+            <input type="text" required value={form.nom_declarant} onChange={handleChange("nom_declarant")} placeholder="Nom et prénom" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Votre email *">
+            <input type="email" required value={form.email_declarant} onChange={handleChange("email_declarant")} placeholder="votre@email.com" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Votre téléphone">
+            <input type="tel" value={form.telephone_declarant} onChange={handleChange("telephone_declarant")} placeholder="+235 XX XX XX XX" style={FORM_INPUT_STYLE} />
+          </FormField>
+        </div>
+        {error && <div style={{ color: "#FC5C65", fontSize: 14, marginTop: 16 }}>{error}</div>}
+        <button type="submit" disabled={submitting} style={{
+          marginTop: 28, background: submitting ? "rgba(252,92,101,0.5)" : "#FC5C65",
+          color: "#fff", border: "none", padding: "14px 32px", borderRadius: 10,
+          fontWeight: 700, fontSize: 15, cursor: submitting ? "not-allowed" : "pointer",
+          boxShadow: "0 8px 30px rgba(252,92,101,0.25)", transition: "all 0.3s",
+        }}>
+          {submitting ? "Envoi en cours..." : "Signaler la panne →"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function EmailForm() {
+  const [form, setForm] = useState({
+    nom_organisation: "", domaine_email: "", nombre_comptes: "",
+    liste_utilisateurs: "", type_usage: "",
+    nom_responsable: "", email_responsable: "", telephone_responsable: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true); setError(null);
+    const { error: err } = await submitDemandeEmail({
+      ...form, nombre_comptes: Number(form.nombre_comptes) || 1,
+    });
+    if (!err) {
+      await sendEmailNotification(
+        `Demande création mails — ${form.nom_organisation}`,
+        `Organisation : ${form.nom_organisation}\nDomaine : ${form.domaine_email}\nNombre de comptes : ${form.nombre_comptes}\nUsage : ${form.type_usage}\nResponsable : ${form.nom_responsable}\nEmail : ${form.email_responsable}\nTél : ${form.telephone_responsable}\n\nUtilisateurs :\n${form.liste_utilisateurs}`,
+        form.email_responsable
+      );
+      setSuccess(true);
+    } else { setError("Une erreur est survenue. Veuillez réessayer."); }
+    setSubmitting(false);
+  };
+  if (success) return <SuccessMessage title="Demande soumise avec succès !" message="Votre demande de création de boîtes mail professionnelles a été enregistrée. Nos équipes vous contacteront dans les 48 heures ouvrables." />;
+  return (
+    <div>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Mail size={22} color="#A55EEA" strokeWidth={2} /> Création de Boîtes Mail Professionnelles
+        </h2>
+        <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Demandez la création de comptes email professionnels sous votre nom de domaine</p>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <FormField label="Nom de l'organisation *">
+            <input type="text" required value={form.nom_organisation} onChange={handleChange("nom_organisation")} placeholder="Nom de votre organisation" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Nom de domaine *" hint="Ex : organisation.td">
+            <input type="text" required value={form.domaine_email} onChange={handleChange("domaine_email")} placeholder="organisation.td" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Nombre de comptes souhaités *">
+            <input type="number" required min="1" value={form.nombre_comptes} onChange={handleChange("nombre_comptes")} placeholder="Ex : 5" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Type d'usage *">
+            <select required value={form.type_usage} onChange={handleChange("type_usage")} style={FORM_INPUT_STYLE}>
+              <option value="">Sélectionnez...</option>
+              <option value="Professionnel interne">Communication professionnelle interne</option>
+              <option value="Communication externe">Communication externe / clients</option>
+              <option value="Service citoyen">Service citoyen / public</option>
+              <option value="Administration">Administration publique</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </FormField>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Liste des utilisateurs" hint="Prénom Nom — un par ligne">
+              <textarea value={form.liste_utilisateurs} onChange={handleChange("liste_utilisateurs")} placeholder={"Exemple :\nAli Hassan\nFatima Mahamat\nAdoum Ibrahim"} style={{ ...FORM_INPUT_STYLE, minHeight: 100, resize: "vertical" }} />
+            </FormField>
+          </div>
+          <FormField label="Nom du responsable *">
+            <input type="text" required value={form.nom_responsable} onChange={handleChange("nom_responsable")} placeholder="Nom et prénom" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Email du responsable *">
+            <input type="email" required value={form.email_responsable} onChange={handleChange("email_responsable")} placeholder="responsable@email.com" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Téléphone">
+            <input type="tel" value={form.telephone_responsable} onChange={handleChange("telephone_responsable")} placeholder="+235 XX XX XX XX" style={FORM_INPUT_STYLE} />
+          </FormField>
+        </div>
+        {error && <div style={{ color: "#FC5C65", fontSize: 14, marginTop: 16 }}>{error}</div>}
+        <button type="submit" disabled={submitting} style={{
+          marginTop: 28, background: submitting ? "rgba(165,94,234,0.5)" : "#A55EEA",
+          color: "#fff", border: "none", padding: "14px 32px", borderRadius: 10,
+          fontWeight: 700, fontSize: 15, cursor: submitting ? "not-allowed" : "pointer",
+          boxShadow: "0 8px 30px rgba(165,94,234,0.25)", transition: "all 0.3s",
+        }}>
+          {submitting ? "Envoi en cours..." : "Soumettre la demande →"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function PlateformeForm() {
+  const [form, setForm] = useState({
+    nom_projet: "", type_plateforme: "", nom_organisation: "",
+    description_besoins: "", fonctionnalites: "",
+    budget_approximatif: "", delai_souhaite: "",
+    nom_responsable: "", email_responsable: "", telephone_responsable: "",
+  });
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+  const [error, setError] = useState(null);
+  const handleChange = (field) => (e) => setForm(f => ({ ...f, [field]: e.target.value }));
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setSubmitting(true); setError(null);
+    const { error: err } = await submitDemandePlateforme(form);
+    if (!err) {
+      await sendEmailNotification(
+        `Demande conception plateforme — ${form.nom_projet}`,
+        `Projet : ${form.nom_projet}\nType : ${form.type_plateforme}\nOrganisation : ${form.nom_organisation}\nBudget : ${form.budget_approximatif}\nDélai : ${form.delai_souhaite}\nResponsable : ${form.nom_responsable}\nEmail : ${form.email_responsable}\n\nBesoins :\n${form.description_besoins}\n\nFonctionnalités :\n${form.fonctionnalites}`,
+        form.email_responsable
+      );
+      setSuccess(true);
+    } else { setError("Une erreur est survenue. Veuillez réessayer."); }
+    setSubmitting(false);
+  };
+  if (success) return <SuccessMessage title="Demande soumise avec succès !" message="Votre demande de conception de plateforme numérique a été enregistrée. Nos équipes vous contacteront pour étudier votre projet." />;
+  return (
+    <div>
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ color: TEXT_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 8px", display: "flex", alignItems: "center", gap: 10 }}>
+          <Layers size={22} color="#20BF6B" strokeWidth={2} /> Conception de Plateforme Numérique
+        </h2>
+        <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Soumettez votre projet de plateforme ou application numérique — site web, portail, système de gestion</p>
+      </div>
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+          <FormField label="Nom du projet *">
+            <input type="text" required value={form.nom_projet} onChange={handleChange("nom_projet")} placeholder="Ex : Portail citoyen de N'Djaména" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Type de plateforme *">
+            <select required value={form.type_plateforme} onChange={handleChange("type_plateforme")} style={FORM_INPUT_STYLE}>
+              <option value="">Sélectionnez...</option>
+              <option value="Site web institutionnel">Site web institutionnel</option>
+              <option value="Application web">Application web</option>
+              <option value="Portail citoyen">Portail citoyen / e-gouvernement</option>
+              <option value="Système de gestion">Système de gestion (ERP, CRM...)</option>
+              <option value="Plateforme e-commerce">Plateforme e-commerce</option>
+              <option value="Application mobile">Application mobile</option>
+              <option value="Autre">Autre</option>
+            </select>
+          </FormField>
+          <FormField label="Nom de l'organisation *">
+            <input type="text" required value={form.nom_organisation} onChange={handleChange("nom_organisation")} placeholder="Ministère, entreprise, institution..." style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Budget approximatif">
+            <select value={form.budget_approximatif} onChange={handleChange("budget_approximatif")} style={FORM_INPUT_STYLE}>
+              <option value="">Non défini</option>
+              <option value="< 1M FCFA">Moins de 1 million FCFA</option>
+              <option value="1-5M FCFA">1 à 5 millions FCFA</option>
+              <option value="5-20M FCFA">5 à 20 millions FCFA</option>
+              <option value="> 20M FCFA">Plus de 20 millions FCFA</option>
+            </select>
+          </FormField>
+          <FormField label="Délai souhaité">
+            <input type="text" value={form.delai_souhaite} onChange={handleChange("delai_souhaite")} placeholder="Ex : 3 mois, fin 2026..." style={FORM_INPUT_STYLE} />
+          </FormField>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Description des besoins *">
+              <textarea required value={form.description_besoins} onChange={handleChange("description_besoins")} placeholder="Décrivez votre projet, ses objectifs, le public cible et les problèmes qu'il doit résoudre..." style={{ ...FORM_INPUT_STYLE, minHeight: 110, resize: "vertical" }} />
+            </FormField>
+          </div>
+          <div style={{ gridColumn: "1 / -1" }}>
+            <FormField label="Fonctionnalités souhaitées" hint="Listez les fonctionnalités principales">
+              <textarea value={form.fonctionnalites} onChange={handleChange("fonctionnalites")} placeholder={"Exemple :\n- Authentification des utilisateurs\n- Tableau de bord administrateur\n- Formulaires en ligne\n- Paiement électronique"} style={{ ...FORM_INPUT_STYLE, minHeight: 100, resize: "vertical" }} />
+            </FormField>
+          </div>
+          <FormField label="Nom du responsable *">
+            <input type="text" required value={form.nom_responsable} onChange={handleChange("nom_responsable")} placeholder="Nom et prénom" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Email du responsable *">
+            <input type="email" required value={form.email_responsable} onChange={handleChange("email_responsable")} placeholder="responsable@email.com" style={FORM_INPUT_STYLE} />
+          </FormField>
+          <FormField label="Téléphone">
+            <input type="tel" value={form.telephone_responsable} onChange={handleChange("telephone_responsable")} placeholder="+235 XX XX XX XX" style={FORM_INPUT_STYLE} />
+          </FormField>
+        </div>
+        {error && <div style={{ color: "#FC5C65", fontSize: 14, marginTop: 16 }}>{error}</div>}
+        <button type="submit" disabled={submitting} style={{
+          marginTop: 28, background: submitting ? "rgba(32,191,107,0.5)" : "#20BF6B",
+          color: "#fff", border: "none", padding: "14px 32px", borderRadius: 10,
+          fontWeight: 700, fontSize: 15, cursor: submitting ? "not-allowed" : "pointer",
+          boxShadow: "0 8px 30px rgba(32,191,107,0.25)", transition: "all 0.3s",
+        }}>
+          {submitting ? "Envoi en cours..." : "Soumettre le projet →"}
+        </button>
+      </form>
+    </div>
+  );
+}
+
+function EServicesPage({ onBack }) {
+  const [activeService, setActiveService] = useState(null);
+  const eServices = [
+    {
+      id: "domaine", icon: Globe, title: "Nom de Domaine .td", subtitle: "Enregistrement",
+      description: "Demandez l'enregistrement d'un nom de domaine sous l'extension nationale .td pour votre organisation.",
+      color: "#00C9A7", bg: "rgba(0,201,167,0.08)",
+    },
+    {
+      id: "equipement", icon: Monitor, title: "Installation d'Équipements", subtitle: "Réseau & Télécoms",
+      description: "Soumettez une demande d'installation d'équipements réseau ou de télécommunications sur votre site.",
+      color: "#4F8EF7", bg: "rgba(79,142,247,0.08)",
+    },
+    {
+      id: "panne", icon: AlertTriangle, title: "Signalement de Panne", subtitle: "Support Technique",
+      description: "Déclarez une panne technique pour une prise en charge rapide par nos équipes spécialisées.",
+      color: "#FC5C65", bg: "rgba(252,92,101,0.08)",
+    },
+    {
+      id: "email", icon: Mail, title: "Création de Mails", subtitle: "Messagerie Professionnelle",
+      description: "Demandez la création de boîtes mail professionnelles sous votre nom de domaine institutionnel.",
+      color: "#A55EEA", bg: "rgba(165,94,234,0.08)",
+    },
+    {
+      id: "plateforme", icon: Layers, title: "Conception de Plateforme", subtitle: "Développement Numérique",
+      description: "Soumettez votre projet de plateforme numérique : site web, portail citoyen, application ou système de gestion.",
+      color: "#20BF6B", bg: "rgba(32,191,107,0.08)",
+    },
+  ];
+  return (
+    <div style={{ minHeight: "100vh", background: SITE_BG_COLOR }}>
+      <div style={{
+        background: "linear-gradient(135deg, #050A19 0%, #0d1a3d 100%)",
+        padding: "100px 2rem 60px", position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", top: "20%", right: "10%", width: 300, height: 300, borderRadius: "50%", background: "radial-gradient(circle, rgba(0,201,167,0.15) 0%, transparent 70%)", filter: "blur(40px)" }} />
+        <div style={{ position: "absolute", bottom: "10%", left: "5%", width: 400, height: 200, borderRadius: "50%", background: "radial-gradient(circle, rgba(79,142,247,0.1) 0%, transparent 70%)", filter: "blur(40px)" }} />
+        <div style={{ maxWidth: 1200, margin: "0 auto", position: "relative", zIndex: 1 }}>
+          <button onClick={onBack} style={{
+            background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.2)",
+            color: "#fff", padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+            fontSize: 13, fontWeight: 500, marginBottom: 32,
+          }}>← Retour à l'accueil</button>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            background: "rgba(0,201,167,0.15)", border: "1px solid rgba(0,201,167,0.3)",
+            borderRadius: 100, padding: "6px 14px", marginBottom: 20,
+          }}>
+            <span style={{ width: 6, height: 6, borderRadius: "50%", background: SECONDARY_COLOR, display: "block" }} />
+            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 600, letterSpacing: 1.5 }}>SERVICES EN LIGNE</span>
+          </div>
+          <h1 style={{ color: "#fff", fontSize: "clamp(1.8rem, 3.5vw, 2.8rem)", fontWeight: 900, margin: "0 0 16px" }}>
+            E-Services <span style={{ color: SECONDARY_COLOR }}>ADETIC</span>
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: 16, maxWidth: 560, margin: 0, lineHeight: 1.7 }}>
+            Accédez à nos services administratifs et techniques en ligne. Soumettez vos demandes directement depuis cette plateforme, sans vous déplacer.
+          </p>
+        </div>
+      </div>
+      <div style={{ maxWidth: 1200, margin: "0 auto", padding: "60px 2rem" }}>
+        {!activeService ? (
+          <>
+            <div style={{ textAlign: "center", marginBottom: 48 }}>
+              <h2 style={{ color: TEXT_COLOR, fontSize: 24, fontWeight: 800, margin: "0 0 12px" }}>Choisissez un service</h2>
+              <p style={{ color: MUTED_TEXT, fontSize: 15, margin: 0 }}>Sélectionnez le type de demande que vous souhaitez soumettre</p>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 60 }}>
+              {eServices.map(s => (
+                <ServiceCard key={s.id} service={s} onClick={() => setActiveService(s.id)} />
+              ))}
+            </div>
+            <div style={{
+              background: "linear-gradient(135deg, rgba(0,201,167,0.06), rgba(79,142,247,0.06))",
+              border: "1px solid rgba(0,201,167,0.15)", borderRadius: 16,
+              padding: "28px 32px", display: "flex", alignItems: "flex-start", gap: 20,
+            }}>
+              <div style={{ fontSize: 28, marginTop: 2 }}>ℹ️</div>
+              <div>
+                <h3 style={{ color: TEXT_COLOR, fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>Comment ça marche ?</h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
+                  {[
+                    { step: "1", text: "Choisissez votre service" },
+                    { step: "2", text: "Remplissez le formulaire" },
+                    { step: "3", text: "Soumettez votre demande" },
+                    { step: "4", text: "Réponse sous 48h ouvrables" },
+                  ].map(item => (
+                    <div key={item.step} style={{ display: "flex", alignItems: "center", gap: 12 }}>
+                      <div style={{
+                        width: 28, height: 28, borderRadius: "50%", background: SECONDARY_COLOR,
+                        color: "#fff", display: "flex", alignItems: "center", justifyContent: "center",
+                        fontSize: 13, fontWeight: 700, flexShrink: 0,
+                      }}>{item.step}</div>
+                      <span style={{ color: MUTED_TEXT, fontSize: 14 }}>{item.text}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div>
+            <button onClick={() => setActiveService(null)} style={{
+              background: "transparent", border: "1px solid rgba(15,23,42,0.12)",
+              color: TEXT_COLOR, padding: "8px 16px", borderRadius: 8, cursor: "pointer",
+              fontSize: 13, fontWeight: 500, marginBottom: 36,
+            }}>← Retour aux services</button>
+            <div style={{
+              background: "#fff", border: "1px solid rgba(15,23,42,0.06)",
+              borderRadius: 20, padding: 40, boxShadow: "0 4px 24px rgba(15,23,42,0.06)",
+            }}>
+              {activeService === "domaine" && <DomainForm />}
+              {activeService === "equipement" && <EquipmentForm />}
+              {activeService === "panne" && <PanneForm />}
+              {activeService === "email" && <EmailForm />}
+              {activeService === "plateforme" && <PlateformeForm />}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function EServicesBanner({ onNavigate }) {
+  return (
+    <section style={{ background: "linear-gradient(135deg, #050A19 0%, #0d1a3d 100%)", padding: "80px 2rem" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", textAlign: "center" }}>
+        <AnimSection>
+          <div style={{ marginBottom: 16 }}>
+            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>💻 Services en ligne</span>
+          </div>
+          <h2 style={{ color: "#fff", fontSize: "clamp(1.8rem, 3vw, 2.5rem)", fontWeight: 900, margin: "0 0 16px" }}>
+            Effectuez vos démarches en ligne
+          </h2>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 16, maxWidth: 540, margin: "0 auto 36px", lineHeight: 1.7 }}>
+            Demande de nom de domaine .td, installation d'équipements, signalement de panne — tout depuis votre navigateur, sans déplacement.
+          </p>
+          <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap", marginBottom: 36 }}>
+            {[
+              { label: "Nom de domaine .td", icon: Globe },
+              { label: "Installation équipements", icon: Monitor },
+              { label: "Signaler une panne", icon: AlertTriangle },
+            ].map((item, i) => {
+              const ItemIcon = item.icon;
+              return (
+                <div key={i} style={{
+                  background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.12)",
+                  borderRadius: 10, padding: "10px 18px",
+                  display: "flex", alignItems: "center", gap: 8,
+                  color: "rgba(255,255,255,0.8)", fontSize: 14, fontWeight: 500,
+                }}>
+                  <ItemIcon size={15} strokeWidth={2} /> {item.label}
+                </div>
+              );
+            })}
+          </div>
+          <button
+            onClick={() => onNavigate("eservices")}
+            style={{
+              background: SECONDARY_COLOR, color: "#fff", border: "none",
+              padding: "14px 36px", borderRadius: 10, fontWeight: 700, fontSize: 15,
+              cursor: "pointer", boxShadow: "0 8px 30px rgba(0,201,167,0.3)",
+              transition: "all 0.3s",
+            }}
+            onMouseEnter={e => { e.target.style.transform = "translateY(-2px)"; e.target.style.boxShadow = "0 12px 40px rgba(0,201,167,0.45)"; }}
+            onMouseLeave={e => { e.target.style.transform = ""; e.target.style.boxShadow = "0 8px 30px rgba(0,201,167,0.3)"; }}
+          >
+            Accéder aux E-Services →
+          </button>
+        </AnimSection>
       </div>
     </section>
   );
@@ -539,8 +1558,13 @@ function MissionsSection() {
                   width: 120, height: 120, borderRadius: "50%",
                   background: `${m.color}08`,
                 }} />
-                <div style={{ fontSize: 36, marginBottom: 20 }}>{m.icon}</div>
-                <h3 style={{ color: BG_COLOR, fontSize: 18, fontWeight: 800, marginBottom: 12 }}>{m.title}</h3>
+                <IconBadge
+                  icon={m.icon}
+                  size={54}
+                  color={m.color}
+                  bg={`${m.color}15`}
+                />
+                <h3 style={{ color: BG_COLOR, fontSize: 18, fontWeight: 800, marginBottom: 12, marginTop: 18 }}>{m.title}</h3>
                 <p style={{ color: MUTED_TEXT, fontSize: 14, lineHeight: 1.7, marginBottom: 24 }}>{m.desc}</p>
                 <div style={{
                   display: "flex", alignItems: "center", gap: 14,
@@ -607,57 +1631,52 @@ function DirectionSection() {
 
         <AnimSection delay={100}>
           <div style={{
-            background: "linear-gradient(135deg, rgba(247,183,49,0.08), rgba(0,0,0,0))",
-            border: "1px solid rgba(247,183,49,0.2)",
-            borderRadius: 24, padding: "50px",
-            display: "grid", gridTemplateColumns: "auto 1fr", gap: 50, alignItems: "center",
+            background: "linear-gradient(135deg, #fff 0%, rgba(0,201,167,0.04) 100%)",
+            border: "1px solid rgba(0,201,167,0.18)",
+            borderRadius: 28, padding: "48px",
+            display: "grid", gridTemplateColumns: "260px 1fr", gap: 56, alignItems: "center",
           }}>
+            {/* Photo DG */}
             <div style={{
-              width: 140, height: 140, borderRadius: "50%",
+              width: 260, height: 320, borderRadius: 20,
               overflow: "hidden", flexShrink: 0,
-              boxShadow: "0 8px 40px rgba(15,23,42,0.08)",
-              border: "1px solid rgba(15,23,42,0.06)",
-              background: "#fff",
+              boxShadow: "0 20px 60px rgba(0,201,167,0.18), 0 4px 16px rgba(15,23,42,0.1)",
+              border: "3px solid rgba(0,201,167,0.25)",
+              background: "#f8fafc",
             }}>
-              <img src={dgAdoum} alt="Directeur Général - M. Adoum" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+              <img src={dgAdoum} alt="Directeur Général - Adoum Djimet Saboun" style={{ width: "100%", height: "100%", objectFit: "cover", objectPosition: "top", display: "block" }} />
             </div>
+
+            {/* Texte */}
             <div>
-              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 16 }}>
-                <span style={{ background: "rgba(247,183,49,0.15)", color: "#F7B731", fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 100, letterSpacing: 1 }}>DIRECTEUR GÉNÉRAL</span>
+              <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 18 }}>
+                <span style={{
+                  background: "rgba(0,201,167,0.12)", color: SECONDARY_COLOR,
+                  fontSize: 11, fontWeight: 700, padding: "5px 14px",
+                  borderRadius: 100, letterSpacing: 1.5, border: "1px solid rgba(0,201,167,0.25)",
+                }}>DIRECTEUR GÉNÉRAL</span>
               </div>
-              <h3 style={{ color: BG_COLOR, fontSize: 26, fontWeight: 900, marginBottom: 8 }}>M. ADOUM</h3>
-              <p style={{ color: "#F7B731", fontSize: 14, fontWeight: 600, marginBottom: 20 }}>Directeur Général de l'ADETIC</p>
-              <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.8 }}>
+              <h3 style={{ color: BG_COLOR, fontSize: 30, fontWeight: 900, marginBottom: 6, letterSpacing: -0.5 }}>Adoum Djimet Saboun</h3>
+              <p style={{ color: SECONDARY_COLOR, fontSize: 15, fontWeight: 600, marginBottom: 22, letterSpacing: 0.3 }}>Directeur Général de l'ADETIC</p>
+              <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.85, marginBottom: 28 }}>
                 Nommé par décret N°0196/PT/PM/MTEN/2024 du 06 mars 2024, le Directeur Général pilote la stratégie nationale de développement des TIC au Tchad. Sous sa direction, l'ADETIC accélère la transformation numérique de l'État tchadien, du déploiement de la fibre optique à la mise en place du datacenter national.
               </p>
-              <div style={{ marginTop: 24, display: "flex", gap: 12 }}>
-                <div style={{ background: PANEL_BG, border: "1px solid rgba(15,23,42,0.08)", borderRadius: 10, padding: "12px 20px", textAlign: "center" }}>
-                  <div style={{ color: "#F7B731", fontWeight: 900, fontSize: 18 }}>2024</div>
-                  <div style={{ color: "rgba(15,23,42,0.6)", fontSize: 11, marginTop: 2 }}>Nomination</div>
-                </div>
+              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+                {[
+                  { val: "2024", label: "Nomination" },
+                  { val: "Décret", label: "N°0196/PT/PM" },
+                  { val: ".td", label: "Domaine national" },
+                ].map((item, i) => (
+                  <div key={i} style={{
+                    background: i === 0 ? "rgba(0,201,167,0.08)" : PANEL_BG,
+                    border: `1px solid ${i === 0 ? "rgba(0,201,167,0.25)" : "rgba(15,23,42,0.08)"}`,
+                    borderRadius: 12, padding: "12px 20px", textAlign: "center",
+                  }}>
+                    <div style={{ color: i === 0 ? SECONDARY_COLOR : BG_COLOR, fontWeight: 900, fontSize: 16 }}>{item.val}</div>
+                    <div style={{ color: MUTED_TEXT, fontSize: 11, marginTop: 3 }}>{item.label}</div>
+                  </div>
+                ))}
               </div>
-            </div>
-          </div>
-        </AnimSection>
-
-        {/* IGF Event */}
-        <AnimSection delay={200}>
-          <div style={{
-            marginTop: 30,
-            background: PANEL_BG, border: "1px solid rgba(15,23,42,0.08)",
-            borderRadius: 20, padding: "36px",
-            display: "grid", gridTemplateColumns: "1fr auto", gap: 30, alignItems: "center",
-          }}>
-            <div>
-              <span style={{ color: "#4F8EF7", fontSize: 11, fontWeight: 700, letterSpacing: 2 }}>ÉVÉNEMENT · IGF 2025</span>
-              <h3 style={{ color: BG_COLOR, fontSize: 20, fontWeight: 800, margin: "10px 0 12px" }}>IGF 2025 : Une délégation tchadienne unie autour des priorités nationales</h3>
-              <p style={{ color: MUTED_TEXT, fontSize: 14, lineHeight: 1.7 }}>
-                En marge des travaux du Forum sur la Gouvernance de l'Internet en Norvège, le Ministre Dr Boukar Michel a présidé une réunion de coordination stratégique avec les entités sous tutelle et la société civile tchadienne.
-              </p>
-            </div>
-            <div style={{ textAlign: "center", flexShrink: 0 }}>
-              <div style={{ fontSize: 48 }}>🇳🇴</div>
-              <div style={{ color: "rgba(15,23,42,0.6)", fontSize: 12, marginTop: 8 }}>Norvège · 2025</div>
             </div>
           </div>
         </AnimSection>
@@ -668,12 +1687,12 @@ function DirectionSection() {
 
 function ActivitesSection() {
   const items = [
-    { icon: "📡", title: "IXP National", desc: "Point d'Échange Internet permettant aux acteurs locaux d'échanger directement leur trafic pour une meilleure qualité et souveraineté.", color: "#00C9A7" },
-    { icon: "🏢", title: "Télécentres Provinciaux", desc: "Déploiement de télécentres dans les villes de Mongo, Abéché, Bongor, Doba, Biltine et Amdjarass pour réduire la fracture numérique.", color: "#4F8EF7" },
-    { icon: "🗄️", title: "Datacenter National", desc: "Construction et certification du datacenter national en cours, garantissant la souveraineté et la sécurité des données de l'État tchadien.", color: "#F7B731" },
-    { icon: "🌐", title: "Gestion Domaine .td", desc: "Politique et procédures d'enregistrement des noms de domaine .td, attribution d'agréments de registrars et administration des serveurs racine.", color: "#A55EEA" },
-    { icon: "🛠️", title: "Développement des plateformes", desc: "Conception, développement et déploiement de plateformes numériques publiques (portails, services en ligne, APIs) pour faciliter l'accès aux services de l'État.", color: "#FC5C65" },
-    { icon: "🏛️", title: "Digitalisation de l'administration", desc: "Accompagnement à la digitalisation des processus administratifs, sécurisation des flux et formation pour une administration électronique efficace.", color: "#20BF6B" },
+    { icon: Network, title: "IXP National", desc: "Point d'Échange Internet permettant aux acteurs locaux d'échanger directement leur trafic pour une meilleure qualité et souveraineté.", color: "#00C9A7" },
+    { icon: Building2, title: "Télécentres Provinciaux", desc: "Déploiement de télécentres dans les villes de Mongo, Abéché, Bongor, Doba, Biltine et Amdjarass pour réduire la fracture numérique.", color: "#4F8EF7" },
+    { icon: Database, title: "Datacenter National", desc: "Construction et certification du datacenter national en cours, garantissant la souveraineté et la sécurité des données de l'État tchadien.", color: "#F7B731" },
+    { icon: Globe, title: "Gestion Domaine .td", desc: "Politique et procédures d'enregistrement des noms de domaine .td, attribution d'agréments de registrars et administration des serveurs racine.", color: "#A55EEA" },
+    { icon: Code2, title: "Développement des plateformes", desc: "Conception, développement et déploiement de plateformes numériques publiques (portails, services en ligne, APIs) pour faciliter l'accès aux services de l'État.", color: "#FC5C65" },
+    { icon: Landmark, title: "Digitalisation de l'administration", desc: "Accompagnement à la digitalisation des processus administratifs, sécurisation des flux et formation pour une administration électronique efficace.", color: "#20BF6B" },
   ];
 
   return (
@@ -706,12 +1725,12 @@ function ActivitesSection() {
                   e.currentTarget.style.boxShadow = "";
                 }}
               >
-                <div style={{
-                  width: 50, height: 50, borderRadius: 12,
-                  background: `${item.color}18`,
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontSize: 22, marginBottom: 16,
-                }}>{item.icon}</div>
+                <IconBadge
+                  icon={item.icon}
+                  size={54}
+                  color={item.color}
+                  bg={`${item.color}22`}
+                />
                 <h3 style={{ color: BG_COLOR, fontSize: 16, fontWeight: 800, marginBottom: 10 }}>{item.title}</h3>
                 <p style={{ color: MUTED_TEXT, fontSize: 13, lineHeight: 1.7 }}>{item.desc}</p>
                 <div style={{ marginTop: 16, width: 30, height: 2, background: item.color, borderRadius: 2 }} />
@@ -733,8 +1752,15 @@ function ContactSection() {
     if (!form.nom || !form.email || !form.message) return;
     setSaving(true);
     const { error } = await addContactMessage(form);
+    if (!error) {
+      await sendEmailNotification(
+        `Nouveau message de contact — ${form.nom}`,
+        `Nom : ${form.nom}\nEmail : ${form.email}\n\nMessage :\n${form.message}`,
+        form.email
+      );
+      setSent(true);
+    }
     setSaving(false);
-    if (!error) setSent(true);
   };
 
   return (
@@ -762,7 +1788,7 @@ function ContactSection() {
                   borderRadius: 14, padding: "18px 20px",
                   display: "flex", alignItems: "flex-start", gap: 14,
                 }}>
-                  <span style={{ fontSize: 22 }}>{c.icon}</span>
+                  <IconBadge icon={c.icon} bg="rgba(15,23,42,0.08)" color="#0f172a" />
                   <div>
                     <div style={{ color: "#00C9A7", fontSize: 11, fontWeight: 700, letterSpacing: 1, marginBottom: 4 }}>{c.label}</div>
                     <div style={{ color: MUTED_TEXT, fontSize: 14 }}>{c.val}</div>
@@ -856,7 +1882,7 @@ function ContactSection() {
   );
 }
 
-function Footer() {
+function Footer({ onNavigate }) {
   return (
     <footer style={{
       background: SITE_BG_COLOR,
@@ -902,7 +1928,18 @@ function Footer() {
         </div>
         <div style={{ borderTop: "1px solid rgba(15,23,42,0.08)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
           <span style={{ color: "rgba(15,23,42,0.6)", fontSize: 12 }}>© 2026 ADETIC — Tous droits réservés</span>
-          <span style={{ color: "rgba(15,23,42,0.6)", fontSize: 12 }}>Établissement public administratif · Loi n° 012/PR/2014</span>
+          <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
+            <span style={{ color: "rgba(15,23,42,0.6)", fontSize: 12 }}>Établissement public administratif · Loi n° 012/PR/2014</span>
+            <button onClick={() => onNavigate("admin")} style={{
+              background: "transparent", border: "none", cursor: "pointer",
+              color: "rgba(15,23,42,0.25)", fontSize: 11, fontFamily: "inherit",
+              transition: "color 0.2s", padding: 0,
+            }}
+              onMouseEnter={e => e.target.style.color = "#00C9A7"}
+              onMouseLeave={e => e.target.style.color = "rgba(15,23,42,0.25)"}>
+              Admin
+            </button>
+          </div>
         </div>
       </div>
     </footer>
@@ -911,22 +1948,89 @@ function Footer() {
 
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
+  const [page, setPage] = useState(() =>
+    window.location.hash === "#admin" ? "admin" : "home"
+  );
+  const [actualites, setActualites] = useState([]);
+  const [loadingActualites, setLoadingActualites] = useState(true);
+  const [fetchError, setFetchError] = useState(null);
+
   useEffect(() => {
     const fn = () => setScrolled(window.scrollY > 50);
     window.addEventListener("scroll", fn);
     return () => window.removeEventListener("scroll", fn);
   }, []);
 
+  useEffect(() => {
+    const onHash = () => {
+      if (window.location.hash === "#admin") setPage("admin");
+    };
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  useEffect(() => {
+    async function loadActualites() {
+      setLoadingActualites(true);
+      setFetchError(null);
+      try {
+        const data = await fetchActualites();
+        if (data?.length > 0) {
+          const withImages = data
+            .filter(item => IMAGE_MAP[item.image_url] || item.image_url?.startsWith("http"))
+            .map(item => ({
+              ...item,
+              image: IMAGE_MAP[item.image_url] || item.image_url,
+              icon: item.icon || null,
+            }));
+          setActualites(withImages.length > 0 ? withImages : ACTUALITES.filter(a => a.image));
+        } else {
+          setActualites(ACTUALITES.filter(a => a.image));
+        }
+      } catch {
+        setActualites(ACTUALITES.filter(a => a.image));
+      } finally {
+        setLoadingActualites(false);
+      }
+    }
+    loadActualites();
+  }, []);
+
+  const handleNavigate = (targetPage) => {
+    if (targetPage === "admin") {
+      window.location.hash = "admin";
+    } else {
+      window.location.hash = "";
+    }
+    setPage(targetPage);
+    if (targetPage === "home" || targetPage === "eservices") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
+  if (page === "admin") {
+    return <AdminPage onBack={() => setPage("home")} />;
+  }
+
   return (
     <div style={{ fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif", background: SITE_BG_COLOR, minHeight: "100vh" }}>
-      <Navbar scrolled={scrolled} />
-      <HeroSection />
-      <ActualitesSection />
-      <MissionsSection />
-      <ActivitesSection />
-      <DirectionSection />
-      <ContactSection />
-      <Footer />
+      <Navbar scrolled={scrolled} activePage={page} onNavigate={handleNavigate} />
+      {page === "articles" ? (
+        <ArticlesPage actualites={actualites} loading={loadingActualites} fetchError={fetchError} onBack={() => setPage("home")} />
+      ) : page === "eservices" ? (
+        <EServicesPage onBack={() => setPage("home")} />
+      ) : (
+        <>
+          <HeroSection />
+          <DirectionSection />
+          <ActualitesSection actualites={actualites} loading={loadingActualites} fetchError={fetchError} />
+          <MissionsSection />
+          <ActivitesSection />
+          <EServicesBanner onNavigate={handleNavigate} />
+          <ContactSection />
+          <Footer onNavigate={handleNavigate} />
+        </>
+      )}
     </div>
   );
 }
