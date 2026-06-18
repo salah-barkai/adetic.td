@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import "./responsive.css";
 import { fetchActualites, addContactMessage, submitDemandeDomaine, submitDemandeEquipement, submitDeclarationPanne, submitDemandeEmail, submitDemandePlateforme } from "./supabaseClient";
 import AdminPage from "./AdminPage";
 import {
@@ -473,7 +474,7 @@ function HeroSection() {
       ))}
 
       <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%", position: "relative", zIndex: 1, paddingTop: 100 }}>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 60, alignItems: "center" }}>
+        <div className="hero-grid">
           <div>
             <div style={{
               display: "inline-flex", alignItems: "center", gap: 8,
@@ -527,15 +528,14 @@ function HeroSection() {
           </div>
 
           {/* Right: .td animated visual */}
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
+          <div className="hero-td-visual" style={{ display: "flex", justifyContent: "center", alignItems: "center" }}>
             <TDVisual />
           </div>
         </div>
 
         {/* Stats bar */}
-        <div style={{
+        <div className="hero-stats-grid" style={{
           marginTop: 80,
-          display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
           gap: 1,
           background: "rgba(0,201,167,0.1)",
           border: "1px solid rgba(0,201,167,0.15)",
@@ -588,8 +588,8 @@ function ActualitesSection({ actualites, loading, fetchError }) {
   const listItems = hasActualites ? actualites : [];
 
   return (
-    <section id="actualites" ref={ref} style={{
-      background: SITE_BG_COLOR, padding: "100px 2rem",
+    <section id="actualites" ref={ref} className="section-pad" style={{
+      background: SITE_BG_COLOR,
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <AnimSection>
@@ -600,7 +600,7 @@ function ActualitesSection({ actualites, loading, fetchError }) {
           </div>
         </AnimSection>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, borderRadius: 20, overflow: "hidden", border: "1px solid rgba(255,255,255,0.06)" }}>
+        <div className="actualites-grid">
           {/* Left: list */}
           <div style={{ background: PANEL_BG }}>
             {listItems.map((a, i) => (
@@ -667,7 +667,7 @@ function ActualitesSection({ actualites, loading, fetchError }) {
             ) : (
               <>
                 {activeArticle.image && (
-                  <img src={activeArticle.image} alt={activeArticle.title} style={{ width: "100%", height: 220, objectFit: "cover", borderRadius: 12, marginBottom: 18 }} />
+                  <img src={activeArticle.image} alt={activeArticle.title} className="art-img-detail" />
                 )}
                 <div style={{ marginBottom: 20 }}>
                   <IconBadge
@@ -697,24 +697,20 @@ function ActualitesSection({ actualites, loading, fetchError }) {
       </div>
 
       {openArticle && (
-        <div style={{
+        <div className="modal-overlay" style={{
           position: "fixed", inset: 0, zIndex: 200,
           display: "flex", alignItems: "center", justifyContent: "center",
           background: "rgba(15,23,42,0.7)", padding: "30px",
         }}>
-          <div style={{
-            width: "100%", maxWidth: 960, maxHeight: "calc(100vh - 60px)",
-            overflowY: "auto", background: "#f8fafc",
-            borderRadius: 24, padding: "32px", position: "relative",
-            boxShadow: "0 30px 80px rgba(15,23,42,0.35)",
-          }}>
+          <div className="modal-box">
             <button onClick={() => setOpenArticle(null)} style={{
               position: "absolute", top: 20, right: 20, border: "none",
               background: "rgba(15,23,42,0.08)", color: BG_COLOR,
               width: 40, height: 40, borderRadius: 12, cursor: "pointer", fontWeight: 700,
+              zIndex: 1,
             }}>×</button>
             {openArticle.image && (
-              <img src={openArticle.image} alt={openArticle.title} style={{ width: "100%", height: 320, objectFit: "cover", borderRadius: 20, marginBottom: 24 }} />
+              <img src={openArticle.image} alt={openArticle.title} className="art-img-modal" />
             )}
             <span style={{ fontSize: 12, color: openArticle.color, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{openArticle.category}</span>
             <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 2.8rem)", fontWeight: 900, margin: "14px 0 12px" }}>{openArticle.title}</h2>
@@ -731,17 +727,27 @@ function ActualitesSection({ actualites, loading, fetchError }) {
   );
 }
 
+const MOIS_FR = { janvier:1, février:2, fevrier:2, mars:3, avril:4, mai:5, juin:6, juillet:7, août:8, aout:8, septembre:9, octobre:10, novembre:11, décembre:12, decembre:12 };
+function parseDateArticle(str = "") {
+  const parts = str.trim().toLowerCase().split(/\s+/);
+  const month = MOIS_FR[parts[0]] || 0;
+  const year = parseInt(parts[1]) || 0;
+  return year * 100 + month;
+}
+
 function ArticlesPage({ actualites, loading, fetchError, onBack }) {
   const [openArticle, setOpenArticle] = useState(null);
 
+  const sorted = [...(actualites || [])].sort((a, b) => parseDateArticle(b.date) - parseDateArticle(a.date));
+
   return (
-    <section id="articles-page" style={{ background: SITE_BG_COLOR, padding: "100px 2rem", minHeight: "100vh" }}>
+    <section id="articles-page" className="section-pad" style={{ background: SITE_BG_COLOR, minHeight: "100vh" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 20, marginBottom: 40 }}>
+        <div className="articles-header">
           <div>
-            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>📰 Toutes les actualités</span>
-            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 3rem)", fontWeight: 900, margin: "14px 0 10px" }}>Page spéciale des articles Supabase</h2>
-            <p style={{ color: MUTED_TEXT, maxWidth: 680, fontSize: 16 }}>Toutes les actualités chargées depuis la base de données Supabase sont affichées ici avec leurs images, catégories et extraits.</p>
+            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>📰 Actualités</span>
+            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 3rem)", fontWeight: 900, margin: "14px 0 10px" }}>Toutes les actualités</h2>
+            <p style={{ color: MUTED_TEXT, maxWidth: 680, fontSize: 16 }}>Retrouvez l'ensemble des dernières nouvelles et communiqués de l'ADETIC.</p>
           </div>
           <button onClick={onBack} style={{
             background: "transparent",
@@ -760,16 +766,18 @@ function ArticlesPage({ actualites, loading, fetchError, onBack }) {
           <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>
             <strong>Erreur de chargement :</strong> {fetchError}
           </div>
-        ) : actualites.length === 0 ? (
-          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Aucun article trouvé dans la base de données Supabase.</div>
+        ) : sorted.length === 0 ? (
+          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Aucun article pour le moment.</div>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: 24 }}>
-            {actualites.map((article, index) => (
+          <div className="articles-grid">
+            {sorted.map((article, index) => (
               <div key={index} style={{ background: "#fff", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(15,23,42,0.08)", boxShadow: "0 18px 50px rgba(15,23,42,0.08)" }}>
                 {article.image ? (
-                  <img src={article.image} alt={article.title} style={{ width: "100%", height: 220, objectFit: "cover" }} />
+                  <div className="art-img-wrap">
+                    <img src={article.image} alt={article.title} />
+                  </div>
                 ) : (
-                  <div style={{ width: "100%", height: 220, background: "rgba(15,23,42,0.04)" }} />
+                  <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(15,23,42,0.04)" }} />
                 )}
                 <div style={{ padding: 28 }}>
                   <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
@@ -797,11 +805,11 @@ function ArticlesPage({ actualites, loading, fetchError, onBack }) {
       </div>
 
       {openArticle && (
-        <div style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div style={{ width: "100%", maxWidth: 920, background: "#fff", borderRadius: 24, overflow: "hidden", position: "relative" }}>
-            <button onClick={() => setOpenArticle(null)} style={{ position: "absolute", top: 18, right: 18, border: "none", background: "rgba(15,23,42,0.08)", borderRadius: 12, width: 42, height: 42, cursor: "pointer", fontSize: 18 }}>×</button>
-            {openArticle.image && <img src={openArticle.image} alt={openArticle.title} style={{ width: "100%", height: 320, objectFit: "cover" }} />}
-            <div style={{ padding: 32 }}>
+        <div className="modal-overlay" style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
+          <div className="modal-box-sm" style={{ padding: 32 }}>
+            <button onClick={() => setOpenArticle(null)} style={{ position: "absolute", top: 18, right: 18, border: "none", background: "rgba(15,23,42,0.08)", borderRadius: 12, width: 42, height: 42, cursor: "pointer", fontSize: 18, zIndex: 1 }}>×</button>
+            {openArticle.image && <img src={openArticle.image} alt={openArticle.title} className="art-img-modal" />}
+            <div>
               <span style={{ color: openArticle.color || SECONDARY_COLOR, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5 }}>{openArticle.category}</span>
               <h2 style={{ color: BG_COLOR, fontSize: 28, fontWeight: 900, margin: "14px 0 18px" }}>{openArticle.title}</h2>
               <p style={{ color: MUTED_TEXT, fontSize: 16, lineHeight: 1.8, marginBottom: 24 }}>{openArticle.content || openArticle.excerpt}</p>
@@ -1519,7 +1527,7 @@ function EServicesBanner({ onNavigate }) {
 
 function MissionsSection() {
   return (
-    <section id="missions" style={{ background: SITE_BG_COLOR, padding: "100px 2rem" }}>
+    <section id="missions" className="section-pad" style={{ background: SITE_BG_COLOR }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <AnimSection>
           <div style={{ textAlign: "center", marginBottom: 70 }}>
@@ -1529,7 +1537,7 @@ function MissionsSection() {
           </div>
         </AnimSection>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(2, 1fr)", gap: 20 }}>
+        <div className="missions-grid">
           {MISSIONS.map((m, i) => (
             <AnimSection key={i} delay={i * 100}>
               <div style={{
@@ -1585,15 +1593,14 @@ function MissionsSection() {
             background: "linear-gradient(135deg, rgba(0,201,167,0.08), rgba(79,142,247,0.08))",
             border: "1px solid rgba(0,201,167,0.2)",
             borderRadius: 20, padding: "40px",
-            display: "grid", gridTemplateColumns: "1fr auto", gap: 40, alignItems: "center",
-          }}>
+          }} className="fibre-grid">
             <div>
               <h3 style={{ color: BG_COLOR, fontSize: 22, fontWeight: 800, marginBottom: 12 }}>Réalisation en Fibre Optique</h3>
               <p style={{ color: MUTED_TEXT, lineHeight: 1.7, margin: 0, maxWidth: 600 }}>
                 L'ADETIC a installé des infrastructures en fibre optique connectant plusieurs ministères et institutions publiques. Le projet est réalisé à près de <strong style={{ color: "#00C9A7" }}>80 %</strong>, et très bientôt, tout le Tchad sera connecté, marquant un pas vers une administration moderne et performante.
               </p>
             </div>
-            <div style={{ textAlign: "center" }}>
+            <div className="fibre-chart" style={{ textAlign: "center" }}>
               <div style={{ position: "relative", width: 100, height: 100 }}>
                 <svg viewBox="0 0 100 100" style={{ width: 100, height: 100, transform: "rotate(-90deg)" }}>
                   <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="8" />
@@ -1620,7 +1627,7 @@ function MissionsSection() {
 
 function DirectionSection() {
   return (
-    <section id="direction" style={{ background: SITE_BG_COLOR, padding: "100px 2rem" }}>
+    <section id="direction" className="section-pad" style={{ background: SITE_BG_COLOR }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <AnimSection>
           <div style={{ textAlign: "center", marginBottom: 70 }}>
@@ -1630,14 +1637,9 @@ function DirectionSection() {
         </AnimSection>
 
         <AnimSection delay={100}>
-          <div style={{
-            background: "linear-gradient(135deg, #fff 0%, rgba(0,201,167,0.04) 100%)",
-            border: "1px solid rgba(0,201,167,0.18)",
-            borderRadius: 28, padding: "48px",
-            display: "grid", gridTemplateColumns: "260px 1fr", gap: 56, alignItems: "center",
-          }}>
+          <div className="direction-grid">
             {/* Photo DG */}
-            <div style={{
+            <div className="direction-photo" style={{
               width: 260, height: 320, borderRadius: 20,
               overflow: "hidden", flexShrink: 0,
               boxShadow: "0 20px 60px rgba(0,201,167,0.18), 0 4px 16px rgba(15,23,42,0.1)",
@@ -1661,7 +1663,7 @@ function DirectionSection() {
               <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.85, marginBottom: 28 }}>
                 Nommé par décret N°0196/PT/PM/MTEN/2024 du 06 mars 2024, le Directeur Général pilote la stratégie nationale de développement des TIC au Tchad. Sous sa direction, l'ADETIC accélère la transformation numérique de l'État tchadien, du déploiement de la fibre optique à la mise en place du datacenter national.
               </p>
-              <div style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
+              <div className="direction-stats" style={{ display: "flex", gap: 14, flexWrap: "wrap" }}>
                 {[
                   { val: "2024", label: "Nomination" },
                   { val: "Décret", label: "N°0196/PT/PM" },
@@ -1696,7 +1698,7 @@ function ActivitesSection() {
   ];
 
   return (
-    <section id="activites" style={{ background: SITE_BG_COLOR, padding: "100px 2rem" }}>
+    <section id="activites" className="section-pad" style={{ background: SITE_BG_COLOR }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <AnimSection>
           <div style={{ textAlign: "center", marginBottom: 70 }}>
@@ -1706,7 +1708,7 @@ function ActivitesSection() {
           </div>
         </AnimSection>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
+        <div className="activites-grid">
           {items.map((item, i) => (
             <AnimSection key={i} delay={i * 70}>
               <div style={{
@@ -1764,7 +1766,7 @@ function ContactSection() {
   };
 
   return (
-    <section id="contact" style={{ background: SITE_BG_COLOR, padding: "100px 2rem" }}>
+    <section id="contact" className="section-pad" style={{ background: SITE_BG_COLOR }}>
       <div style={{ maxWidth: 900, margin: "0 auto" }}>
         <AnimSection>
           <div style={{ textAlign: "center", marginBottom: 60 }}>
@@ -1774,7 +1776,7 @@ function ContactSection() {
           </div>
         </AnimSection>
 
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 30 }}>
+        <div className="contact-grid">
           <AnimSection delay={100}>
             <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {[
@@ -1890,7 +1892,7 @@ function Footer({ onNavigate }) {
       padding: "50px 2rem 30px",
     }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div style={{ display: "grid", gridTemplateColumns: "2fr 1fr 1fr 1fr", gap: 40, marginBottom: 50 }}>
+        <div className="footer-grid">
           <div>
             <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 16 }}>
               <div style={{
@@ -1926,7 +1928,7 @@ function Footer({ onNavigate }) {
             </div>
           ))}
         </div>
-        <div style={{ borderTop: "1px solid rgba(15,23,42,0.08)", paddingTop: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        <div className="footer-bottom">
           <span style={{ color: "rgba(15,23,42,0.6)", fontSize: 12 }}>© 2026 ADETIC — Tous droits réservés</span>
           <div style={{ display: "flex", alignItems: "center", gap: 20 }}>
             <span style={{ color: "rgba(15,23,42,0.6)", fontSize: 12 }}>Établissement public administratif · Loi n° 012/PR/2014</span>
