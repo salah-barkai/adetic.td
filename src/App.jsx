@@ -1749,19 +1749,31 @@ function ContactSection() {
   const [form, setForm] = useState({ nom: "", email: "", message: "" });
   const [sent, setSent] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [formErr, setFormErr] = useState("");
 
   const handleSubmit = async () => {
-    if (!form.nom || !form.email || !form.message) return;
+    setFormErr("");
+    if (!form.nom.trim() || !form.email.trim() || !form.message.trim()) {
+      setFormErr("Veuillez remplir tous les champs avant d'envoyer.");
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
+      setFormErr("Adresse e-mail invalide.");
+      return;
+    }
     setSaving(true);
     const { error } = await addContactMessage(form);
-    if (!error) {
-      await sendEmailNotification(
-        `Nouveau message de contact — ${form.nom}`,
-        `Nom : ${form.nom}\nEmail : ${form.email}\n\nMessage :\n${form.message}`,
-        form.email
-      );
-      setSent(true);
+    if (error) {
+      setFormErr("Erreur lors de l'envoi. Veuillez réessayer.");
+      setSaving(false);
+      return;
     }
+    await sendEmailNotification(
+      `Nouveau message de contact — ${form.nom}`,
+      `Nom : ${form.nom}\nEmail : ${form.email}\n\nMessage :\n${form.message}`,
+      form.email
+    );
+    setSent(true);
     setSaving(false);
   };
 
@@ -1803,77 +1815,94 @@ function ContactSection() {
           <AnimSection delay={150}>
             {sent ? (
               <div style={{
-                background: "rgba(0,201,167,0.08)", border: "1px solid rgba(0,201,167,0.3)",
-                borderRadius: 20, padding: "40px", textAlign: "center",
+                background: "linear-gradient(135deg, rgba(0,201,167,0.08), rgba(79,142,247,0.06))",
+                border: "1px solid rgba(0,201,167,0.25)",
+                borderRadius: 20, padding: "48px 32px", textAlign: "center",
                 display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
                 minHeight: 320,
               }}>
-                <div style={{ fontSize: 48, marginBottom: 16 }}>✅</div>
-                <h3 style={{ color: "#00C9A7", fontSize: 20, fontWeight: 800 }}>Message envoyé !</h3>
-                <p style={{ color: "rgba(255,255,255,0.6)", fontSize: 14, marginTop: 8 }}>Nous vous répondrons dans les plus brefs délais.</p>
+                <div style={{ fontSize: 52, marginBottom: 18 }}>✅</div>
+                <h3 style={{ color: SECONDARY_COLOR, fontSize: 22, fontWeight: 800, margin: "0 0 10px" }}>Message envoyé !</h3>
+                <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.6, maxWidth: 320 }}>Nous avons bien reçu votre message et vous répondrons dans les plus brefs délais.</p>
+                <button onClick={() => { setSent(false); setForm({ nom: "", email: "", message: "" }); }} style={{
+                  marginTop: 24, background: "transparent", border: `1px solid ${SECONDARY_COLOR}`,
+                  color: SECONDARY_COLOR, borderRadius: 10, padding: "10px 24px",
+                  cursor: "pointer", fontWeight: 700, fontSize: 14,
+                }}>Envoyer un autre message</button>
               </div>
             ) : (
               <div style={{
-                background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)",
+                background: "#ffffff", border: "1px solid rgba(15,23,42,0.1)",
                 borderRadius: 20, padding: "32px",
+                boxShadow: "0 4px 24px rgba(15,23,42,0.06)",
               }}>
-                <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <h3 style={{ color: BG_COLOR, fontSize: 16, fontWeight: 800, margin: "0 0 22px" }}>Envoyer un message</h3>
+                <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
                   {["nom", "email"].map(field => (
                     <div key={field}>
-                      <label style={{ color: MUTED_TEXT, fontSize: 12, fontWeight: 600, letterSpacing: 1, display: "block", marginBottom: 6 }}>
-                        {field === "nom" ? "Votre nom" : "Adresse e-mail"}
+                      <label style={{ color: TEXT_COLOR, fontSize: 13, fontWeight: 600, display: "block", marginBottom: 7 }}>
+                        {field === "nom" ? "Votre nom *" : "Adresse e-mail *"}
                       </label>
                       <input
                         type={field === "email" ? "email" : "text"}
                         value={form[field]}
-                        onChange={e => setForm(f => ({ ...f, [field]: e.target.value }))}
+                        onChange={e => { setForm(f => ({ ...f, [field]: e.target.value })); setFormErr(""); }}
                         style={{
-                          width: "100%", background: "rgba(15,23,42,0.05)",
-                          border: "1px solid rgba(15,23,42,0.1)",
+                          width: "100%", background: "#f8fafc",
+                          border: "1px solid rgba(15,23,42,0.12)",
                           borderRadius: 10, padding: "12px 14px",
                           color: BG_COLOR, fontSize: 14,
                           outline: "none", boxSizing: "border-box",
                           transition: "border-color 0.2s",
+                          fontFamily: "inherit",
                         }}
-                        onFocus={e => e.target.style.borderColor = "rgba(0,201,167,0.5)"}
-                        onBlur={e => e.target.style.borderColor = "rgba(15,23,42,0.1)"}
+                        onFocus={e => e.target.style.borderColor = SECONDARY_COLOR}
+                        onBlur={e => e.target.style.borderColor = "rgba(15,23,42,0.12)"}
                         placeholder={field === "nom" ? "Nom Prénom" : "email@exemple.com"}
                       />
                     </div>
                   ))}
                   <div>
-                    <label style={{ color: MUTED_TEXT, fontSize: 12, fontWeight: 600, letterSpacing: 1, display: "block", marginBottom: 6 }}>Message</label>
+                    <label style={{ color: TEXT_COLOR, fontSize: 13, fontWeight: 600, display: "block", marginBottom: 7 }}>Message *</label>
                     <textarea
                       value={form.message}
-                      onChange={e => setForm(f => ({ ...f, message: e.target.value }))}
-                      rows={4}
+                      onChange={e => { setForm(f => ({ ...f, message: e.target.value })); setFormErr(""); }}
+                      rows={5}
                       style={{
-                        width: "100%", background: "rgba(15,23,42,0.05)",
-                        border: "1px solid rgba(15,23,42,0.1)",
+                        width: "100%", background: "#f8fafc",
+                        border: "1px solid rgba(15,23,42,0.12)",
                         borderRadius: 10, padding: "12px 14px",
                         color: BG_COLOR, fontSize: 14,
                         outline: "none", resize: "vertical", boxSizing: "border-box",
                         fontFamily: "inherit",
+                        transition: "border-color 0.2s",
                       }}
-                      onFocus={e => e.target.style.borderColor = "rgba(0,201,167,0.5)"}
-                      onBlur={e => e.target.style.borderColor = "rgba(15,23,42,0.1)"}
+                      onFocus={e => e.target.style.borderColor = SECONDARY_COLOR}
+                      onBlur={e => e.target.style.borderColor = "rgba(15,23,42,0.12)"}
                       placeholder="Décrivez votre besoin..."
                     />
                   </div>
+                  {formErr && (
+                    <div style={{
+                      background: "rgba(252,92,101,0.08)", border: "1px solid rgba(252,92,101,0.25)",
+                      borderRadius: 8, padding: "10px 14px",
+                      color: "#FC5C65", fontSize: 13, fontWeight: 600,
+                    }}>⚠ {formErr}</div>
+                  )}
                   <button
                     onClick={handleSubmit}
                     disabled={saving}
                     style={{
-                      background: SECONDARY_COLOR,
-                      color: PRIMARY_COLOR, border: "none", borderRadius: 10,
+                      background: saving ? "rgba(0,201,167,0.7)" : SECONDARY_COLOR,
+                      color: "#fff", border: "none", borderRadius: 10,
                       padding: "14px", fontWeight: 800, fontSize: 15,
                       cursor: saving ? "not-allowed" : "pointer", transition: "all 0.3s",
                       boxShadow: "0 8px 30px rgba(0,201,167,0.25)",
-                      opacity: saving ? 0.7 : 1,
+                      width: "100%",
                     }}
-                    onMouseEnter={e => { if (!saving) { e.target.style.transform = "translateY(-2px)"; e.target.style.background = `linear-gradient(135deg, ${SECONDARY_COLOR}, ${SECONDARY_COLOR_ALT})`; e.target.style.color = PRIMARY_COLOR; e.target.style.boxShadow = "0 12px 40px rgba(0,201,167,0.35)"; } }}
-                    onMouseLeave={e => { if (!saving) { e.target.style.transform = ""; e.target.style.background = SECONDARY_COLOR; e.target.style.color = PRIMARY_COLOR; e.target.style.boxShadow = "0 8px 30px rgba(0,201,167,0.25)"; } }}
-                  >{saving ? "Envoi en cours..." : "Envoyer le message →"}</button>
+                    onMouseEnter={e => { if (!saving) { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 12px 40px rgba(0,201,167,0.35)"; } }}
+                    onMouseLeave={e => { if (!saving) { e.currentTarget.style.transform = ""; e.currentTarget.style.boxShadow = "0 8px 30px rgba(0,201,167,0.25)"; } }}
+                  >{saving ? "Envoi en cours…" : "Envoyer le message →"}</button>
                 </div>
               </div>
             )}

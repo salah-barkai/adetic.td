@@ -1171,12 +1171,19 @@ function DossiersTab({ type, data, onDataChange }) {
 function ContactsTab({ contacts, onDataChange }) {
   const [selected, setSelected] = useState(null);
   const [filter, setFilter] = useState("Tous");
+  const [statusErr, setStatusErr] = useState("");
 
   const filtered = filter === "Tous" ? contacts : contacts.filter(c => (c.statut || "Nouveau") === filter);
 
-  const handleStatusUpdate = (id, newStatus) => {
-    onDataChange(prev => prev.map(d => d.id === id ? { ...d, statut: newStatus } : d));
-    if (selected?.id === id) setSelected(s => ({ ...s, statut: newStatus }));
+  const handleStatusUpdate = async (id, newStatus) => {
+    setStatusErr("");
+    try {
+      await adminUpdateStatus("contacts", id, newStatus);
+      onDataChange(prev => prev.map(d => d.id === id ? { ...d, statut: newStatus } : d));
+      if (selected?.id === id) setSelected(s => ({ ...s, statut: newStatus }));
+    } catch (e) {
+      setStatusErr("Erreur mise à jour : " + (e.message || "réessayez"));
+    }
   };
 
   return (
@@ -1185,6 +1192,12 @@ function ContactsTab({ contacts, onDataChange }) {
         <h2 style={{ color: TEXT, fontSize: 22, fontWeight: 800, margin: "0 0 4px" }}>Messages de contact</h2>
         <p style={{ color: MUTED, fontSize: 14, margin: 0 }}>{contacts.length} message(s) reçu(s) via le formulaire</p>
       </div>
+
+      {statusErr && (
+        <div style={{ background: "rgba(252,92,101,0.1)", border: "1px solid rgba(252,92,101,0.3)", borderRadius: 10, padding: "10px 16px", color: "#FC5C65", fontSize: 13, fontWeight: 600, marginBottom: 16 }}>
+          ⚠ {statusErr}
+        </div>
+      )}
 
       <div style={{ display: "flex", gap: 8, marginBottom: 20 }}>
         {["Tous", "Nouveau", "Lu", "Répondu"].map(s => (
