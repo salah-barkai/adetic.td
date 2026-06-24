@@ -34,6 +34,16 @@ import igfReunion from "../images/igf-reunion.jpg";
 import rencontreDgSmart from "../images/rencontre-dg-et-smart.jpg";
 import aiTraining from "../images/pexels-photo-1054397-1.jpeg";
 import siteLogo from "../images/logo.jpg";
+import eqDG      from "../equipes adetic/DG adoum djimet 1.jpg";
+import eqDGA     from "../equipes adetic/DG a abdramane Tom.jpg";
+import eqAbdelkerim from "../equipes adetic/Directeur des noms de domaines et adress ip abdelkerim fadoul.jpg";
+import eqKhadidja   from "../equipes adetic/Khadidja harsou abbas dsus.jpg";
+import eqZara        from "../equipes adetic/Zara janette daj.jpg";
+import eqAhmat       from "../equipes adetic/ahmat moussa dtic.jpg";
+import eqHissein     from "../equipes adetic/hissein issa rozi dcri.jpg";
+import eqMahamat     from "../equipes adetic/mahamat youssouf boy daf.jpg";
+import eqDebora      from "../equipes adetic/debora drh.jpg";
+import eqZaki        from "../equipes adetic/dr zaki.jpg";
 
 const IMAGE_MAP = {
   "igf-reunion.jpg": igfReunion,
@@ -47,13 +57,14 @@ const IMAGE_MAP = {
 };
 
 const NAV_LINKS = [
-  { label: "Accueil", href: "#hero", page: "home" },
-  { label: "Direction Générale", href: "#direction", page: "home" },
-  { label: "Actualités", href: "#actualites", page: "articles" },
-  { label: "Activités", href: "#activites", page: "home" },
-  { label: "Missions", href: "#missions", page: "home" },
-  { label: "E-Services", href: "#eservices", page: "eservices" },
-  { label: "Contact", href: "#contact", page: "home" },
+  { label: "Accueil",            href: "#hero",       page: "home"     },
+  { label: "Direction Générale", href: "#direction",  page: "home"     },
+  { label: "Équipe",             href: "#equipe",     page: "equipe"   },
+  { label: "Actualités",         href: "#actualites", page: "articles" },
+  { label: "Activités",          href: "#activites",  page: "home"     },
+  { label: "Missions",           href: "#missions",   page: "home"     },
+  { label: "E-Services",         href: "#eservices",  page: "eservices"},
+  { label: "Contact",            href: "#contact",    page: "home"     },
 ];
 
 const PRIMARY_COLOR = "#ffffff";
@@ -233,6 +244,7 @@ function Navbar({ scrolled, activePage, onNavigate }) {
     setMenuOpen(false);
     if (l.page === "articles") { onNavigate("articles"); return; }
     if (l.page === "eservices") { onNavigate("eservices"); return; }
+    if (l.page === "equipe") { onNavigate("equipe"); return; }
     onNavigate("home");
     setTimeout(() => {
       const el = document.querySelector(l.href);
@@ -264,7 +276,7 @@ function Navbar({ scrolled, activePage, onNavigate }) {
         {!isMobile && (
           <div style={{ display: "flex", gap: 4, alignItems: "center" }}>
             {NAV_LINKS.map(l => {
-              const isActive = activePage === l.page && (l.page === "articles" || l.page === "eservices");
+              const isActive = activePage === l.page && (l.page === "articles" || l.page === "eservices" || l.page === "equipe");
               const isEService = l.page === "eservices";
               return (
                 <a key={l.label} href={l.href}
@@ -317,7 +329,7 @@ function Navbar({ scrolled, activePage, onNavigate }) {
           borderTop: "1px solid rgba(15,23,42,0.08)", padding: "8px 2rem 20px",
         }}>
           {NAV_LINKS.map(l => {
-            const isActive = activePage === l.page && (l.page === "articles" || l.page === "eservices");
+            const isActive = activePage === l.page && (l.page === "articles" || l.page === "eservices" || l.page === "equipe");
             return (
               <a key={l.label} href={l.href}
                 style={{
@@ -570,159 +582,268 @@ function HeroSection() {
   );
 }
 
-function ActualitesSection({ actualites, loading, fetchError }) {
-  const [active, setActive] = useState(0);
+function ArticleCard({ article, onClick, featured = false }) {
+  const [hovered, setHovered] = useState(false);
+  const color = article.color || SECONDARY_COLOR;
+
+  if (featured) {
+    return (
+      <div
+        onClick={onClick}
+        onMouseEnter={() => setHovered(true)}
+        onMouseLeave={() => setHovered(false)}
+        style={{
+          display: "grid", gridTemplateColumns: "1fr 1fr",
+          borderRadius: 24, overflow: "hidden",
+          boxShadow: hovered ? "0 24px 64px rgba(15,23,42,0.18)" : "0 8px 32px rgba(15,23,42,0.10)",
+          cursor: "pointer", transition: "box-shadow 0.3s",
+          border: "1px solid rgba(15,23,42,0.07)", marginBottom: 28,
+        }}
+      >
+        {/* Image */}
+        <div style={{ position: "relative", overflow: "hidden", minHeight: 320 }}>
+          {article.image ? (
+            <img
+              src={article.image}
+              alt={article.title}
+              style={{
+                width: "100%", height: "100%",
+                objectFit: "cover", objectPosition: "center",
+                display: "block", position: "absolute", inset: 0,
+                transform: hovered ? "scale(1.04)" : "scale(1)",
+                transition: "transform 0.5s ease",
+              }}
+            />
+          ) : (
+            <div style={{ width: "100%", height: "100%", background: `${color}18`, position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 64 }}>
+              {article.icon || "📰"}
+            </div>
+          )}
+          {/* Badge catégorie sur l'image */}
+          <div style={{
+            position: "absolute", top: 18, left: 18,
+            background: color, color: "#fff",
+            fontSize: 10, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase",
+            padding: "5px 12px", borderRadius: 100,
+            boxShadow: `0 4px 14px ${color}50`,
+          }}>{article.category || "Actualité"}</div>
+        </div>
+
+        {/* Contenu */}
+        <div style={{
+          padding: "40px 40px",
+          background: "#fff",
+          display: "flex", flexDirection: "column", justifyContent: "center",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 18 }}>
+            <span style={{ color, fontSize: 11, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{article.category}</span>
+            <span style={{ color: "rgba(15,23,42,0.35)", fontSize: 11 }}>—</span>
+            <span style={{ color: "rgba(15,23,42,0.5)", fontSize: 11 }}>{article.date}</span>
+          </div>
+          <h3 style={{
+            color: BG_COLOR, fontSize: "clamp(1.2rem, 1.8vw, 1.6rem)", fontWeight: 900,
+            lineHeight: 1.35, margin: "0 0 16px",
+          }}>{article.title}</h3>
+          <p style={{ color: MUTED_TEXT, fontSize: 14, lineHeight: 1.75, margin: "0 0 28px", flex: 1 }}>
+            {(article.excerpt || "").slice(0, 180)}{(article.excerpt || "").length > 180 ? "…" : ""}
+          </p>
+          <div style={{
+            display: "inline-flex", alignItems: "center", gap: 8,
+            color, fontWeight: 700, fontSize: 14,
+          }}>
+            Lire l'article
+            <span style={{ transform: hovered ? "translateX(4px)" : "translateX(0)", transition: "transform 0.2s", display: "inline-block" }}>→</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: "#fff", borderRadius: 20, overflow: "hidden",
+        cursor: "pointer", transition: "all 0.3s",
+        boxShadow: hovered ? "0 16px 48px rgba(15,23,42,0.14)" : "0 4px 16px rgba(15,23,42,0.07)",
+        border: "1px solid rgba(15,23,42,0.06)",
+        transform: hovered ? "translateY(-4px)" : "none",
+      }}
+    >
+      {/* Image */}
+      <div style={{ position: "relative", paddingTop: "56.25%", overflow: "hidden", background: `${color}10` }}>
+        {article.image ? (
+          <img
+            src={article.image}
+            alt={article.title}
+            loading="lazy"
+            style={{
+              position: "absolute", inset: 0,
+              width: "100%", height: "100%",
+              objectFit: "cover", objectPosition: "center",
+              transform: hovered ? "scale(1.06)" : "scale(1)",
+              transition: "transform 0.45s ease",
+            }}
+          />
+        ) : (
+          <div style={{
+            position: "absolute", inset: 0,
+            display: "flex", alignItems: "center", justifyContent: "center", fontSize: 40,
+          }}>{article.icon || "📰"}</div>
+        )}
+        <div style={{
+          position: "absolute", bottom: 0, left: 0, right: 0, height: 60,
+          background: "linear-gradient(to top, rgba(5,10,25,0.35), transparent)",
+        }} />
+        <span style={{
+          position: "absolute", top: 14, left: 14,
+          background: color, color: "#fff",
+          fontSize: 9, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase",
+          padding: "4px 10px", borderRadius: 100,
+        }}>{article.category || "Actualité"}</span>
+      </div>
+
+      {/* Contenu */}
+      <div style={{ padding: "20px 22px 24px" }}>
+        <div style={{ color: "rgba(15,23,42,0.45)", fontSize: 11, marginBottom: 8 }}>{article.date}</div>
+        <h3 style={{
+          color: BG_COLOR, fontSize: 15, fontWeight: 800,
+          lineHeight: 1.45, margin: "0 0 10px",
+        }}>{article.title}</h3>
+        <p style={{
+          color: MUTED_TEXT, fontSize: 13, lineHeight: 1.65,
+          margin: 0, display: "-webkit-box", WebkitLineClamp: 2,
+          WebkitBoxOrient: "vertical", overflow: "hidden",
+        }}>{article.excerpt}</p>
+        <div style={{ marginTop: 16, color, fontSize: 12, fontWeight: 700, display: "flex", alignItems: "center", gap: 4 }}>
+          Lire <span style={{ transition: "transform 0.2s", transform: hovered ? "translateX(3px)" : "none", display: "inline-block" }}>→</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArticleModal({ article, onClose }) {
+  return (
+    <div style={{
+      position: "fixed", inset: 0, zIndex: 200,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      background: "rgba(15,23,42,0.72)", padding: "24px",
+      backdropFilter: "blur(4px)",
+    }} onClick={onClose}>
+      <div style={{
+        width: "100%", maxWidth: 780,
+        maxHeight: "calc(100vh - 48px)", overflowY: "auto",
+        background: "#fff", borderRadius: 24,
+        position: "relative", boxShadow: "0 40px 100px rgba(15,23,42,0.4)",
+      }} onClick={e => e.stopPropagation()}>
+        <button onClick={onClose} style={{
+          position: "absolute", top: 16, right: 16, zIndex: 10,
+          border: "none", background: "rgba(15,23,42,0.08)",
+          width: 38, height: 38, borderRadius: 12,
+          cursor: "pointer", fontSize: 18, fontWeight: 700,
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>×</button>
+
+        {/* Image pleine largeur en haut */}
+        {article.image && (
+          <div style={{ width: "100%", aspectRatio: "16/9", overflow: "hidden", borderRadius: "24px 24px 0 0" }}>
+            <img
+              src={article.image}
+              alt={article.title}
+              style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }}
+            />
+          </div>
+        )}
+
+        <div style={{ padding: "32px 36px 36px" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <span style={{
+              background: article.color || SECONDARY_COLOR,
+              color: "#fff", fontSize: 10, fontWeight: 800,
+              letterSpacing: 1.5, textTransform: "uppercase",
+              padding: "4px 12px", borderRadius: 100,
+            }}>{article.category}</span>
+            <span style={{ color: "rgba(15,23,42,0.45)", fontSize: 13 }}>{article.date}</span>
+          </div>
+          <h2 style={{ color: BG_COLOR, fontSize: "clamp(1.4rem, 2.5vw, 2rem)", fontWeight: 900, margin: "0 0 18px", lineHeight: 1.3 }}>
+            {article.title}
+          </h2>
+          <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.85 }}>
+            {article.content || article.excerpt}
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ActualitesSection({ actualites, loading, fetchError, onNavigate }) {
   const [openArticle, setOpenArticle] = useState(null);
   const ref = useRef(null);
   const inView = useInView(ref);
   const hasActualites = actualites && actualites.length > 0;
-  const activeArticle = hasActualites ? actualites[active] : null;
-  const activeColor = activeArticle?.color || SECONDARY_COLOR;
 
-  useEffect(() => {
-    if (hasActualites && active >= actualites.length) {
-      setActive(0);
-    }
-  }, [actualites, active, hasActualites]);
-
-  const listItems = hasActualites ? actualites : [];
+  const featured = hasActualites ? actualites[0] : null;
+  const rest = hasActualites ? actualites.slice(1, 4) : [];
 
   return (
-    <section id="actualites" ref={ref} className="section-pad" style={{
-      background: SITE_BG_COLOR,
-    }}>
+    <section id="actualites" ref={ref} className="section-pad" style={{ background: SITE_BG_COLOR }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
         <AnimSection>
-          <div style={{ textAlign: "center", marginBottom: 60 }}>
-            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>📰 Dernières nouvelles</span>
-            <h2 style={{ color: BG_COLOR, fontSize: "clamp(1.8rem, 3vw, 2.8rem)", fontWeight: 900, margin: "12px 0 16px" }}>Actualités</h2>
-            <p style={{ color: MUTED_TEXT, maxWidth: 500, margin: "0 auto", fontSize: 16 }}>Restez informé des dernières avancées de la transformation numérique du Tchad.</p>
+          <div style={{ display: "flex", alignItems: "flex-end", justifyContent: "space-between", marginBottom: 52, flexWrap: "wrap", gap: 16 }}>
+            <div>
+              <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>📰 Dernières nouvelles</span>
+              <h2 style={{ color: BG_COLOR, fontSize: "clamp(1.8rem, 3vw, 2.8rem)", fontWeight: 900, margin: "10px 0 0" }}>Actualités</h2>
+            </div>
+            {onNavigate && (
+              <button onClick={() => onNavigate("articles")} style={{
+                background: "transparent", border: `1px solid ${SECONDARY_COLOR}`,
+                color: SECONDARY_COLOR, borderRadius: 10, padding: "10px 20px",
+                cursor: "pointer", fontWeight: 700, fontSize: 13, transition: "all 0.2s",
+              }}
+                onMouseEnter={e => { e.currentTarget.style.background = SECONDARY_COLOR; e.currentTarget.style.color = "#fff"; }}
+                onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = SECONDARY_COLOR; }}
+              >Voir toutes les actualités →</button>
+            )}
           </div>
         </AnimSection>
 
-        <div className="actualites-grid">
-          {/* Left: list */}
-          <div style={{ background: PANEL_BG }}>
-            {listItems.map((a, i) => (
+        {/* Chargement / erreur / vide */}
+        {loading && (
+          <div style={{ padding: 60, textAlign: "center", color: MUTED_TEXT }}>Chargement des actualités…</div>
+        )}
+        {!loading && fetchError && (
+          <div style={{ padding: 40, background: "rgba(252,92,101,0.06)", borderRadius: 16, textAlign: "center", color: "#FC5C65" }}>
+            Erreur de chargement : {fetchError}
+          </div>
+        )}
+        {!loading && !fetchError && !hasActualites && (
+          <div style={{ padding: 60, textAlign: "center", color: MUTED_TEXT }}>Aucune actualité pour le moment.</div>
+        )}
+
+        {/* Article featured */}
+        {featured && (
+          <AnimSection>
+            <ArticleCard article={featured} onClick={() => setOpenArticle(featured)} featured />
+          </AnimSection>
+        )}
+
+        {/* Grille des autres articles */}
+        {rest.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+            {rest.map((a, i) => (
               <AnimSection key={i} delay={i * 80}>
-                <div
-                  onClick={() => {
-                    setActive(i);
-                    setOpenArticle(a);
-                  }}
-                  style={{
-                    padding: "24px 28px",
-                    cursor: "pointer",
-                    borderLeft: `3px solid ${i === active ? a.color : "transparent"}`,
-                    background: i === active ? `rgba(${a.color === "#00C9A7" ? "0,201,167" : a.color === "#4F8EF7" ? "79,142,247" : a.color === "#F7B731" ? "247,183,49" : "252,92,101"},0.08)` : "transparent",
-                    transition: "all 0.25s",
-                    borderBottom: "1px solid rgba(15,23,42,0.08)",
-                  }}
-                >
-                  <div style={{ display: "flex", gap: 12, alignItems: "flex-start" }}>
-                    <IconBadge
-                      icon={a.icon}
-                      color={a.color}
-                      bg={`rgba(${a.color === "#00C9A7" ? "0,201,167" : a.color === "#4F8EF7" ? "79,142,247" : a.color === "#F7B731" ? "247,183,49" : a.color === "#FC5C65" ? "252,92,101" : "15,23,42"},0.15)`}
-                    />
-                    {a.image && (
-                      <img src={a.image} alt={a.title} loading="lazy" style={{ width: 84, height: 56, objectFit: "cover", borderRadius: 8, flexShrink: 0 }} />
-                    )}
-                    <div>
-                      <div style={{ display: "flex", gap: 8, alignItems: "center", marginBottom: 6 }}>
-                        <span style={{ fontSize: 11, fontWeight: 700, color: a.color, letterSpacing: 1, textTransform: "uppercase" }}>{a.category}</span>
-                        <span style={{ color: "rgba(15,23,42,0.55)", fontSize: 11 }}>• {a.date}</span>
-                      </div>
-                      <p style={{ color: i === active ? BG_COLOR : MUTED_TEXT, fontSize: 14, fontWeight: i === active ? 600 : 400, lineHeight: 1.5, margin: 0 }}>{a.title}</p>
-                    </div>
-                  </div>
-                </div>
+                <ArticleCard article={a} onClick={() => setOpenArticle(a)} />
               </AnimSection>
             ))}
-            {!hasActualites && (
-              <div style={{ padding: 40, color: MUTED_TEXT, textAlign: "center" }}>
-                {fetchError
-                  ? `Erreur Supabase : ${fetchError}`
-                  : loading
-                    ? "Chargement des actualités en cours..."
-                    : "Aucune actualité trouvée pour le moment."
-                }
-              </div>
-            )}
           </div>
-
-          {/* Right: detail */}
-          <div style={{
-            padding: "40px",
-            background: `linear-gradient(135deg, rgba(${activeColor === "#00C9A7" ? "0,201,167" : activeColor === "#4F8EF7" ? "79,142,247" : activeColor === "#F7B731" ? "247,183,49" : "252,92,101"},0.08) 0%, #f8fafc 100%)`,
-            transition: "all 0.4s",
-            display: "flex", flexDirection: "column", justifyContent: "center",
-            border: "1px solid rgba(15,23,42,0.08)",
-            borderRadius: 20,
-          }}>
-            {!activeArticle ? (
-              <div style={{ padding: 40, color: MUTED_TEXT, textAlign: "center" }}>
-                {loading ? "Chargement des détails de l'article..." : "Sélectionnez une actualité pour voir les détails."}
-              </div>
-            ) : (
-              <>
-                {activeArticle.image && (
-                  <img src={activeArticle.image} alt={activeArticle.title} className="art-img-detail" />
-                )}
-                <div style={{ marginBottom: 20 }}>
-                  <IconBadge
-                    icon={activeArticle.icon}
-                    size={54}
-                    color={activeArticle.color}
-                    bg={`rgba(${activeArticle.color === "#00C9A7" ? "0,201,167" : activeArticle.color === "#4F8EF7" ? "79,142,247" : activeArticle.color === "#F7B731" ? "247,183,49" : "252,92,101"},0.12)`}
-                  />
-                </div>
-                <span style={{ fontSize: 11, color: activeArticle.color, fontWeight: 700, letterSpacing: 2, textTransform: "uppercase", marginBottom: 12, display: "block" }}>
-                  {activeArticle.category} — {activeArticle.date}
-                </span>
-                <h3 style={{ color: BG_COLOR, fontSize: 22, fontWeight: 800, lineHeight: 1.4, marginBottom: 16 }}>{activeArticle.title}</h3>
-                <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.7 }}>{activeArticle.excerpt}</p>
-              </>
-            )}
-            {activeArticle && (
-              <button style={{
-                marginTop: 28, display: "inline-flex", alignItems: "center", gap: 8,
-                color: activeArticle.color, background: "transparent", border: "none",
-                padding: 0, cursor: "pointer", fontSize: 14, fontWeight: 700,
-                textDecoration: "underline", transition: "gap 0.2s",
-              }} onClick={() => setOpenArticle(activeArticle)}>Lire la suite <span>→</span></button>
-            )}
-          </div>
-        </div>
+        )}
       </div>
 
-      {openArticle && (
-        <div className="modal-overlay" style={{
-          position: "fixed", inset: 0, zIndex: 200,
-          display: "flex", alignItems: "center", justifyContent: "center",
-          background: "rgba(15,23,42,0.7)", padding: "30px",
-        }}>
-          <div className="modal-box">
-            <button onClick={() => setOpenArticle(null)} style={{
-              position: "absolute", top: 20, right: 20, border: "none",
-              background: "rgba(15,23,42,0.08)", color: BG_COLOR,
-              width: 40, height: 40, borderRadius: 12, cursor: "pointer", fontWeight: 700,
-              zIndex: 1,
-            }}>×</button>
-            {openArticle.image && (
-              <img src={openArticle.image} alt={openArticle.title} className="art-img-modal" />
-            )}
-            <span style={{ fontSize: 12, color: openArticle.color, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{openArticle.category}</span>
-            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 2.8rem)", fontWeight: 900, margin: "14px 0 12px" }}>{openArticle.title}</h2>
-            <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 18 }}>
-              <span style={{ color: "rgba(15,23,42,0.55)", fontSize: 14 }}>{openArticle.date}</span>
-              <span style={{ color: openArticle.color, fontSize: 14, fontWeight: 700 }}>{openArticle.icon}</span>
-            </div>
-            <p style={{ color: MUTED_TEXT, fontSize: 16, lineHeight: 1.8, marginBottom: 20 }}>{openArticle.content || openArticle.excerpt}</p>
-            <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.75 }}>{openArticle.excerpt}</p>
-          </div>
-        </div>
-      )}
+      {openArticle && <ArticleModal article={openArticle} onClose={() => setOpenArticle(null)} />}
     </section>
   );
 }
@@ -735,89 +856,207 @@ function parseDateArticle(str = "") {
   return year * 100 + month;
 }
 
+/* ──────────────────────────────────────────────
+   ÉQUIPE / ORGANIGRAMME
+────────────────────────────────────────────── */
+function EquipePage({ onBack }) {
+  const DG_TEAM = [
+    { nom: "Adoum Djimet Saboun", poste: "Directeur Général",         initials: "AS", image: eqDG  },
+    { nom: "Abdraman Tom",         poste: "Directeur Général Adjoint", initials: "AT", image: eqDGA },
+  ];
+
+  const DIRS = [
+    { nom: "Abdelkerim Fadoul",      poste: "Directeur",  direction: "Nom de Domaine & Adresses IP",               initials: "AF", color: "#00C9A7", image: eqAbdelkerim },
+    { nom: "Ahmat Moussa Abdoulaye", poste: "Directeur",  direction: "Infrastructures TIC",                        initials: "AM", color: "#4F8EF7", image: eqAhmat      },
+    { nom: "Hissein Issa Rozi",      poste: "Directeur",  direction: "Communication & Coopération Internationale",  initials: "HR", color: "#A55EEA", image: eqHissein    },
+    { nom: "Dr Zaki Mahmat",         poste: "Directeur",  direction: "Études & Planifications",                    initials: "ZM", color: "#20BF6B", image: eqZaki        },
+    { nom: "Khadidja H. Abbas",      poste: "Directrice", direction: "Service Universel & Suivi",                  initials: "KA", color: "#F7B731", image: eqKhadidja   },
+    { nom: "Mahamat Youssouf",       poste: "Directeur",  direction: "Finance & Comptabilité",                     initials: "MY", color: "#FC5C65", image: eqMahamat    },
+    { nom: "Débora Dokhonmo",        poste: "Directrice", direction: "Ressources Humaines",                        initials: "DD", color: "#00C9A7", image: eqDebora      },
+    { nom: "Zara Jeannette Sidick",  poste: "Directrice", direction: "Affaires Juridiques",                        initials: "ZS", color: "#4F8EF7", image: eqZara        },
+  ];
+
+  const Avatar = ({ initials, image, size = 88, color = "#00C9A7", fs = 26 }) => (
+    <div style={{
+      width: size, height: size, borderRadius: "50%", flexShrink: 0,
+      background: image ? "transparent" : `linear-gradient(135deg, ${color} 0%, ${color}99 100%)`,
+      display: "flex", alignItems: "center", justifyContent: "center",
+      fontSize: fs, fontWeight: 900, color: "#fff", overflow: "hidden",
+      boxShadow: `0 6px 24px ${color}44`,
+      border: `3px solid ${color}50`,
+    }}>
+      {image
+        ? <img src={image} alt={initials} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+        : initials}
+    </div>
+  );
+
+  return (
+    <div style={{ background: SITE_BG_COLOR, minHeight: "100vh", paddingTop: 72 }}>
+
+      {/* ── Header ── */}
+      <div style={{
+        background: `linear-gradient(135deg, ${BG_COLOR} 0%, #0d1a3d 60%, #091428 100%)`,
+        padding: "64px 2rem 80px", position: "relative", overflow: "hidden",
+      }}>
+        <div style={{ position: "absolute", right: 0, top: 0, opacity: 0.05 }}>
+          {Array.from({ length: 48 }).map((_, i) => (
+            <div key={i} style={{ display: "inline-block", width: 14, height: 14, borderRadius: "50%", background: SECONDARY_COLOR, margin: 5 }} />
+          ))}
+        </div>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <button onClick={onBack} style={{
+            background: "rgba(255,255,255,0.07)", border: "1px solid rgba(255,255,255,0.14)",
+            color: "rgba(255,255,255,0.65)", padding: "8px 18px", borderRadius: 8,
+            fontSize: 13, cursor: "pointer", marginBottom: 44,
+            display: "inline-flex", alignItems: "center", gap: 7,
+          }}>← Retour au site</button>
+          <div style={{ textAlign: "center" }}>
+            <div style={{ color: SECONDARY_COLOR, fontSize: 11, letterSpacing: 3, fontWeight: 700, textTransform: "uppercase", marginBottom: 14 }}>
+              ADETIC · ORGANIGRAMME
+            </div>
+            <h1 style={{ color: "#fff", fontSize: 42, fontWeight: 900, margin: "0 0 18px", letterSpacing: -0.5 }}>Notre Équipe</h1>
+            <p style={{ color: "rgba(255,255,255,0.48)", fontSize: 15, maxWidth: 560, margin: "0 auto", lineHeight: 1.75 }}>
+              L'ADETIC est dirigée par une équipe de cadres engagés et experts dans le développement
+              des technologies de l'information et de la communication au Tchad.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* ── Corps ── */}
+      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "72px 2rem 88px" }}>
+
+        {/* Direction Générale */}
+        <div style={{ textAlign: "center", marginBottom: 60 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `${SECONDARY_COLOR}14`, border: `1px solid ${SECONDARY_COLOR}35`, borderRadius: 100, padding: "6px 22px", marginBottom: 40 }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: SECONDARY_COLOR }} />
+            <span style={{ color: SECONDARY_COLOR, fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase" }}>Direction Générale</span>
+          </div>
+
+          <div style={{ display: "flex", justifyContent: "center", gap: 28, flexWrap: "wrap" }}>
+            {DG_TEAM.map((p, i) => (
+              <div key={i} style={{
+                background: `linear-gradient(145deg, ${BG_COLOR} 0%, #0d1a3d 100%)`,
+                borderRadius: 24, padding: "40px 48px",
+                border: `1px solid ${SECONDARY_COLOR}30`,
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 20,
+                minWidth: 240, position: "relative", overflow: "hidden",
+                boxShadow: "0 16px 48px rgba(0,0,0,0.28)",
+              }}>
+                <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: `linear-gradient(90deg, ${SECONDARY_COLOR}, ${SECONDARY_COLOR}00)` }} />
+                <Avatar initials={p.initials} image={p.image} size={100} color={SECONDARY_COLOR} fs={32} />
+                <div style={{ textAlign: "center" }}>
+                  <div style={{ color: "#fff", fontWeight: 800, fontSize: 17, marginBottom: 8 }}>{p.nom}</div>
+                  <div style={{ color: SECONDARY_COLOR, fontSize: 11.5, fontWeight: 700, letterSpacing: 1.5, textTransform: "uppercase" }}>{p.poste}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Connecteur hiérarchique */}
+        <div style={{ display: "flex", flexDirection: "column", alignItems: "center", marginBottom: 52 }}>
+          <div style={{ width: 2, height: 36, background: `linear-gradient(to bottom, ${SECONDARY_COLOR}, ${SECONDARY_COLOR}30)` }} />
+          <div style={{ width: "65%", maxWidth: 700, height: 2, background: `linear-gradient(90deg, transparent, ${SECONDARY_COLOR}30, transparent)` }} />
+        </div>
+
+        {/* Directions */}
+        <div style={{ textAlign: "center", marginBottom: 40 }}>
+          <div style={{ display: "inline-flex", alignItems: "center", gap: 8, background: `${SECONDARY_COLOR_ALT}14`, border: `1px solid ${SECONDARY_COLOR_ALT}35`, borderRadius: 100, padding: "6px 22px" }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: SECONDARY_COLOR_ALT }} />
+            <span style={{ color: SECONDARY_COLOR_ALT, fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase" }}>Directions</span>
+          </div>
+        </div>
+
+        <div className="org-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+          {DIRS.map((p, i) => (
+            <div key={i}
+              style={{
+                background: "#fff", borderRadius: 20, padding: "30px 20px",
+                border: "1px solid rgba(15,23,42,0.07)",
+                display: "flex", flexDirection: "column", alignItems: "center", gap: 16,
+                boxShadow: "0 4px 18px rgba(15,23,42,0.06)",
+                position: "relative", overflow: "hidden",
+                transition: "transform 0.22s, box-shadow 0.22s",
+              }}
+              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-5px)"; e.currentTarget.style.boxShadow = `0 14px 36px ${p.color}25`; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 4px 18px rgba(15,23,42,0.06)"; }}
+            >
+              <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 3, background: p.color }} />
+              <Avatar initials={p.initials} image={p.image} size={76} color={p.color} fs={22} />
+              <div style={{ textAlign: "center" }}>
+                <div style={{ color: TEXT_COLOR, fontWeight: 700, fontSize: 13.5, marginBottom: 5, lineHeight: 1.4 }}>{p.nom}</div>
+                <div style={{ color: p.color, fontSize: 10, fontWeight: 800, letterSpacing: 1, textTransform: "uppercase", marginBottom: 8 }}>{p.poste}</div>
+                <div style={{
+                  color: MUTED_TEXT, fontSize: 11.5, lineHeight: 1.55,
+                  padding: "6px 10px", background: `${p.color}0d`,
+                  borderRadius: 8, border: `1px solid ${p.color}20`,
+                }}>{p.direction}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ArticlesPage({ actualites, loading, fetchError, onBack }) {
   const [openArticle, setOpenArticle] = useState(null);
 
   const sorted = [...(actualites || [])].sort((a, b) => parseDateArticle(b.date) - parseDateArticle(a.date));
+  const featured = sorted[0] || null;
+  const rest = sorted.slice(1);
 
   return (
     <section id="articles-page" className="section-pad" style={{ background: SITE_BG_COLOR, minHeight: "100vh" }}>
       <div style={{ maxWidth: 1200, margin: "0 auto" }}>
-        <div className="articles-header">
+
+        <div className="articles-header" style={{ marginBottom: 48 }}>
           <div>
-            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>📰 Actualités</span>
-            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 3rem)", fontWeight: 900, margin: "14px 0 10px" }}>Toutes les actualités</h2>
-            <p style={{ color: MUTED_TEXT, maxWidth: 680, fontSize: 16 }}>Retrouvez l'ensemble des dernières nouvelles et communiqués de l'ADETIC.</p>
+            <span style={{ color: SECONDARY_COLOR, fontSize: 12, fontWeight: 700, letterSpacing: 3, textTransform: "uppercase" }}>{"📰"} Actualités</span>
+            <h2 style={{ color: BG_COLOR, fontSize: "clamp(2rem, 3vw, 2.8rem)", fontWeight: 900, margin: "10px 0 8px" }}>Toutes les actualités</h2>
+            <p style={{ color: MUTED_TEXT, fontSize: 15, margin: 0 }}>
+              {sorted.length > 0 ? `${sorted.length} article${sorted.length > 1 ? "s" : ""} publié${sorted.length > 1 ? "s" : ""}` : "Retrouvez les dernières nouvelles de l'ADETIC."}
+            </p>
           </div>
           <button onClick={onBack} style={{
-            background: "transparent",
-            border: "1px solid rgba(15,23,42,0.12)",
-            borderRadius: 12,
-            color: BG_COLOR,
-            padding: "14px 20px",
-            cursor: "pointer",
-            fontWeight: 700,
-          }}>Retour à l'accueil</button>
+            background: "transparent", border: "1px solid rgba(15,23,42,0.14)",
+            borderRadius: 12, color: BG_COLOR, padding: "12px 20px",
+            cursor: "pointer", fontWeight: 700, fontSize: 14, transition: "all 0.2s",
+          }}
+            onMouseEnter={e => { e.currentTarget.style.background = BG_COLOR; e.currentTarget.style.color = "#fff"; }}
+            onMouseLeave={e => { e.currentTarget.style.background = "transparent"; e.currentTarget.style.color = BG_COLOR; }}
+          >{"←"} Retour à l'accueil</button>
         </div>
 
-        {loading ? (
-          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Chargement des actualités...</div>
-        ) : fetchError ? (
-          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>
-            <strong>Erreur de chargement :</strong> {fetchError}
+        {loading && (
+          <div style={{ padding: 60, textAlign: "center", color: MUTED_TEXT }}>Chargement des actualités…</div>
+        )}
+        {!loading && fetchError && (
+          <div style={{ padding: 40, background: "rgba(252,92,101,0.06)", borderRadius: 16, textAlign: "center", color: "#FC5C65" }}>
+            <strong>Erreur de chargement :</strong> {fetchError}
           </div>
-        ) : sorted.length === 0 ? (
-          <div style={{ padding: 40, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Aucun article pour le moment.</div>
-        ) : (
-          <div className="articles-grid">
-            {sorted.map((article, index) => (
-              <div key={index} style={{ background: "#fff", borderRadius: 24, overflow: "hidden", border: "1px solid rgba(15,23,42,0.08)", boxShadow: "0 18px 50px rgba(15,23,42,0.08)" }}>
-                {article.image ? (
-                  <div className="art-img-wrap">
-                    <img src={article.image} alt={article.title} />
-                  </div>
-                ) : (
-                  <div style={{ width: "100%", aspectRatio: "16/9", background: "rgba(15,23,42,0.04)" }} />
-                )}
-                <div style={{ padding: 28 }}>
-                  <div style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 14 }}>
-                    <IconBadge icon={article.icon || "📰"} color={article.color || "#00C9A7"} bg="rgba(0,201,167,0.12)" />
-                    <div>
-                      <div style={{ color: article.color || SECONDARY_COLOR, fontSize: 11, fontWeight: 800, textTransform: "uppercase", letterSpacing: 1.5 }}>{article.category || "Actualité"}</div>
-                      <div style={{ color: MUTED_TEXT, fontSize: 13 }}>{article.date}</div>
-                    </div>
-                  </div>
-                  <h3 style={{ color: BG_COLOR, fontSize: 20, fontWeight: 800, margin: "0 0 14px" }}>{article.title}</h3>
-                  <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.8, marginBottom: 20 }}>{article.excerpt}</p>
-                  <button onClick={() => setOpenArticle(article)} style={{
-                    color: article.color || SECONDARY_COLOR,
-                    background: "transparent",
-                    border: "none",
-                    cursor: "pointer",
-                    fontWeight: 700,
-                    padding: 0,
-                  }}>Voir l'article →</button>
-                </div>
-              </div>
+        )}
+        {!loading && !fetchError && sorted.length === 0 && (
+          <div style={{ padding: 60, background: PANEL_BG, borderRadius: 20, textAlign: "center", color: MUTED_TEXT }}>Aucun article pour le moment.</div>
+        )}
+
+        {featured && (
+          <ArticleCard article={featured} onClick={() => setOpenArticle(featured)} featured />
+        )}
+
+        {rest.length > 0 && (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+            {rest.map((article, i) => (
+              <ArticleCard key={i} article={article} onClick={() => setOpenArticle(article)} />
             ))}
           </div>
         )}
       </div>
 
-      {openArticle && (
-        <div className="modal-overlay" style={{ position: "fixed", inset: 0, zIndex: 300, background: "rgba(15,23,42,0.75)", display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-          <div className="modal-box-sm" style={{ padding: 32 }}>
-            <button onClick={() => setOpenArticle(null)} style={{ position: "absolute", top: 18, right: 18, border: "none", background: "rgba(15,23,42,0.08)", borderRadius: 12, width: 42, height: 42, cursor: "pointer", fontSize: 18, zIndex: 1 }}>×</button>
-            {openArticle.image && <img src={openArticle.image} alt={openArticle.title} className="art-img-modal" />}
-            <div>
-              <span style={{ color: openArticle.color || SECONDARY_COLOR, fontSize: 12, fontWeight: 700, textTransform: "uppercase", letterSpacing: 1.5 }}>{openArticle.category}</span>
-              <h2 style={{ color: BG_COLOR, fontSize: 28, fontWeight: 900, margin: "14px 0 18px" }}>{openArticle.title}</h2>
-              <p style={{ color: MUTED_TEXT, fontSize: 16, lineHeight: 1.8, marginBottom: 24 }}>{openArticle.content || openArticle.excerpt}</p>
-              <p style={{ color: MUTED_TEXT, fontSize: 15, lineHeight: 1.8 }}>{openArticle.excerpt}</p>
-            </div>
-          </div>
-        </div>
-      )}
+      {openArticle && <ArticleModal article={openArticle} onClose={() => setOpenArticle(null)} />}
     </section>
   );
 }
@@ -1114,7 +1353,6 @@ function PanneForm() {
               <option value="Panne réseau">Panne réseau</option>
               <option value="Équipement défaillant">Équipement défaillant</option>
               <option value="Problème logiciel">Problème logiciel / Système</option>
-              <option value="Coupure électrique">Coupure électrique</option>
               <option value="Problème de connectivité">Problème de connectivité Internet</option>
               <option value="Autre">Autre</option>
             </select>
@@ -2034,7 +2272,7 @@ export default function App() {
       window.location.hash = "";
     }
     setPage(targetPage);
-    if (targetPage === "home" || targetPage === "eservices") {
+    if (targetPage === "home" || targetPage === "eservices" || targetPage === "equipe") {
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
@@ -2050,11 +2288,13 @@ export default function App() {
         <ArticlesPage actualites={actualites} loading={loadingActualites} fetchError={fetchError} onBack={() => setPage("home")} />
       ) : page === "eservices" ? (
         <EServicesPage onBack={() => setPage("home")} />
+      ) : page === "equipe" ? (
+        <EquipePage onBack={() => setPage("home")} />
       ) : (
         <>
           <HeroSection />
           <DirectionSection />
-          <ActualitesSection actualites={actualites} loading={loadingActualites} fetchError={fetchError} />
+          <ActualitesSection actualites={actualites} loading={loadingActualites} fetchError={fetchError} onNavigate={handleNavigate} />
           <MissionsSection />
           <ActivitesSection />
           <EServicesBanner onNavigate={handleNavigate} />

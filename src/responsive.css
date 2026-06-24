@@ -172,6 +172,13 @@
   position: relative;
 }
 
+/* Organigramme */
+.org-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
 /* ============================================================
    TABLET  (≤ 1024px)
    ============================================================ */
@@ -190,6 +197,21 @@
   .footer-grid {
     grid-template-columns: 1fr 1fr 1fr;
     gap: 28px;
+  }
+  /* Featured article : empile sur tablette */
+  .art-featured-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .art-featured-grid .art-featured-img {
+    min-height: 260px !important;
+  }
+  /* Grille des cartes : 2 colonnes */
+  .art-cards-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  /* Organigramme : 2 colonnes sur tablette */
+  .org-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
 }
 
@@ -229,6 +251,21 @@
   .articles-header {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  /* Featured article + grille cartes */
+  .art-featured-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .art-featured-grid .art-featured-img {
+    min-height: 220px !important;
+  }
+  .art-cards-grid {
+    grid-template-columns: 1fr !important;
+  }
+  /* Organigramme : 1 colonne sur mobile */
+  .org-grid {
+    grid-template-columns: 1fr !important;
   }
 
   /* Missions */

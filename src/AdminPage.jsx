@@ -22,6 +22,7 @@ import {
   adminUpdateActualite,
   adminDeleteActualite,
   uploadArticleImage,
+  supabase,
 } from "./supabaseClient";
 
 const ADMIN_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || "Adetic@2024";
@@ -104,13 +105,15 @@ function FieldArea({ label, ...props }) {
 }
 
 /* ─── DOSSIER DOCUMENT ADETIC ─── */
+const DND  = "DIRECTION DE NOM DE DOMAINE ET ADRESSE IP";
+const DITIC = "DIRECTION DES INFRASTRUCTURES TIC";
 const TYPE_CFG = {
-  domaine:    { label: "Demande de nom de domaine .td",       color: "#00C9A7", icon: "🌐", section: "DOMAINES .TD"    },
-  equipement: { label: "Demande d'équipements réseau",        color: "#4F8EF7", icon: "🖥️", section: "ÉQUIPEMENTS"     },
-  panne:      { label: "Déclaration de panne technique",      color: "#FC5C65", icon: "⚡", section: "INCIDENTS RÉSEAU" },
-  email:      { label: "Demande de création de mails",        color: "#A55EEA", icon: "📧", section: "MAILS"           },
-  plateforme: { label: "Demande de conception de plateforme", color: "#20BF6B", icon: "💻", section: "PLATEFORMES"     },
-  contact:    { label: "Message du formulaire de contact",    color: "#4F8EF7", icon: "✉️", section: "CONTACTS"         },
+  domaine:    { label: "Demande de nom de domaine .td",       color: "#00C9A7", icon: "🌐", section: "DOMAINES .TD",    direction: DND,   service: "SERVICE DE NOM DE DOMAINE ET ADRESSE IP" },
+  equipement: { label: "Demande d'équipements réseau",        color: "#4F8EF7", icon: "🖥️", section: "ÉQUIPEMENTS",     direction: DITIC, service: "SERVICE DES INFRASTRUCTURES TIC"          },
+  panne:      { label: "Déclaration de panne technique",      color: "#FC5C65", icon: "⚡", section: "INCIDENTS RÉSEAU", direction: DITIC, service: "SERVICE DES INFRASTRUCTURES TIC"          },
+  email:      { label: "Demande de création de mails",        color: "#A55EEA", icon: "📧", section: "MAILS",           direction: DND,   service: "SERVICE DE NOM DE DOMAINE ET ADRESSE IP" },
+  plateforme: { label: "Demande de conception de plateforme", color: "#20BF6B", icon: "💻", section: "PLATEFORMES",     direction: DND,   service: "SERVICE DE SYSTÈME D'INFORMATION"        },
+  contact:    { label: "Message du formulaire de contact",    color: "#4F8EF7", icon: "✉️", section: "CONTACTS",         direction: "DIRECTION DE LA COMMUNICATION", service: "SERVICE DE COMMUNICATION" },
 };
 
 const FIELD_LABELS = {
@@ -205,6 +208,223 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
     : "—";
   const displayFields = Object.entries(item).filter(([k]) => !["id", "created_at", "statut"].includes(k));
 
+  const genFormalText = () => {
+    const org   = item.nom_organisation || "notre institution";
+    const entite = item.type_entite ? ` (${item.type_entite})` : "";
+    const resp  = item.nom_contact || item.responsable_nom || item.nom_responsable || "";
+    const signBy = resp ? `Le responsable désigné pour le suivi de ce dossier est ${resp}.` : "";
+    const closing = (
+      <p style={{ margin: "12px 0 0", fontStyle: "italic", color: "#4a5568" }}>
+        Dans l'attente d'une suite favorable à notre requête, nous vous prions d'agréer,{" "}
+        <strong>Monsieur le Directeur Général</strong>, l'expression de notre haute considération.
+      </p>
+    );
+    const pStyle = { margin: "0 0 10px", lineHeight: 1.85, color: "#1e293b", fontSize: 12.5 };
+    const salut = (
+      <p style={{ ...pStyle, fontWeight: 700, marginBottom: 14 }}>Monsieur le Directeur Général,</p>
+    );
+    if (type === "domaine") return (<>
+      {salut}
+      <p style={pStyle}>
+        Nous avons l'honneur de porter à votre haute attention la présente demande d'enregistrement
+        de nom de domaine <strong>.td</strong>, formulée au nom de <strong>{org}</strong>{entite}.
+        Cette démarche s'inscrit dans le cadre du renforcement de la présence numérique institutionnelle
+        de notre organisation sur l'espace internet national.
+      </p>
+      <p style={pStyle}>
+        À cet effet, nous sollicitons votre bienveillante approbation pour l'attribution du domaine{" "}
+        <strong>« {item.domaine_souhaite || "—"} »</strong>, conformément aux procédures établies
+        par l'Agence pour la gestion des noms de domaine .td. Nous nous engageons à respecter
+        scrupuleusement l'ensemble des obligations liées à l'utilisation dudit domaine.{" "}
+        {signBy}
+      </p>
+      {closing}
+    </>);
+    if (type === "equipement") return (<>
+      {salut}
+      <p style={pStyle}>
+        Nous avons l'honneur de soumettre à votre haute bienveillance la présente demande de fourniture
+        et d'installation d'équipements réseau au profit de <strong>{org}</strong>{entite}.
+        Les besoins exprimés portent sur des équipements de type{" "}
+        <strong>« {item.type_equipement || "—"} »</strong>{item.quantite ? ` (quantité : ${item.quantite})` : ""},
+        destinés à être déployés sur le site de <strong>{item.localisation_ville || "—"}</strong>.
+      </p>
+      <p style={pStyle}>
+        Dans le souci d'assurer la continuité et la qualité des services informatiques de notre institution,
+        nous sollicitons votre approbation pour la prise en charge de cette demande par les équipes
+        compétentes de la Direction des Infrastructures TIC de l'ADETIC, selon les spécifications
+        techniques détaillées dans le présent dossier. {signBy}
+      </p>
+      {closing}
+    </>);
+    if (type === "panne") return (<>
+      {salut}
+      <p style={pStyle}>
+        Nous avons l'honneur de vous signaler, par la présente déclaration, la survenance d'une panne
+        technique de type <strong>« {item.type_panne || "—"} »</strong> affectant les infrastructures
+        de notre organisation, localisées à <strong>{item.localisation || "—"}</strong>.
+        {item.niveau_urgence ? ` Le niveau d'urgence de cet incident est évalué à : ${item.niveau_urgence}.` : ""}
+        {item.nom_declarant ? ` Ce signalement est effectué par ${item.nom_declarant}.` : ""}
+      </p>
+      <p style={pStyle}>
+        Face à l'impact de cette défaillance sur nos activités opérationnelles, nous sollicitons votre
+        intervention diligente afin qu'une équipe technique de l'ADETIC puisse procéder aux diagnostics
+        et aux opérations de rétablissement nécessaires dans les meilleurs délais, conformément aux
+        engagements de service de l'Agence.
+      </p>
+      <p style={{ ...pStyle, fontStyle: "italic", color: "#4a5568", margin: 0 }}>
+        Dans l'attente de votre diligente intervention, nous vous prions d'agréer,{" "}
+        <strong>Monsieur le Directeur Général</strong>, l'expression de notre haute considération.
+      </p>
+    </>);
+    if (type === "email") return (<>
+      {salut}
+      <p style={pStyle}>
+        Nous avons l'honneur de soumettre à votre haute attention la présente demande de création
+        de comptes de messagerie professionnelle institutionnelle, au bénéfice de{" "}
+        <strong>{org}</strong>{entite}. Cette demande porte sur la création de{" "}
+        <strong>{item.nombre_comptes || "—"} boîte(s) mail</strong> sous le domaine{" "}
+        <strong>« {item.domaine_email || "—"} »</strong>. {signBy}
+      </p>
+      <p style={pStyle}>
+        La mise en place de ces adresses de messagerie institutionnelle permettra à notre organisation
+        de disposer de moyens de communication officiels, sécurisés et conformes aux standards
+        numériques en vigueur. Nous sollicitons votre bienveillante approbation pour la prise en
+        charge de cette demande dans les meilleurs délais.
+      </p>
+      {closing}
+    </>);
+    if (type === "plateforme") return (<>
+      {salut}
+      <p style={pStyle}>
+        Nous avons l'honneur de soumettre à votre haute bienveillance la présente demande de conception
+        et de développement d'une plateforme numérique
+        {item.type_plateforme ? <> de type <strong>« {item.type_plateforme} »</strong></> : ""},
+        dénommée <strong>« {item.nom_projet || "—"} »</strong>, au profit de{" "}
+        <strong>{org}</strong>{entite}. {signBy}
+      </p>
+      <p style={pStyle}>
+        Ce projet numérique vise à répondre aux besoins opérationnels exprimés par notre organisation
+        et détaillés dans le présent dossier technique. Nous sollicitons votre approbation pour la
+        prise en charge de sa réalisation par les équipes compétentes de l'ADETIC, ainsi que votre
+        accompagnement technique tout au long du processus de développement et de déploiement.
+      </p>
+      {closing}
+    </>);
+    return (<>
+      <p style={{ ...pStyle, fontWeight: 700, marginBottom: 14 }}>Monsieur le Directeur Général,</p>
+      <p style={pStyle}>
+        J'ai l'honneur de vous adresser le présent message par le biais du formulaire de contact
+        officiel du site institutionnel de l'ADETIC
+        {item.nom ? <>, au nom de <strong>{item.nom}</strong></> : ""}.
+        Je vous serais reconnaissant(e) de bien vouloir prendre en considération ma requête et
+        de m'apporter une réponse dans les meilleurs délais.
+      </p>
+      <p style={{ ...pStyle, fontStyle: "italic", color: "#4a5568", margin: 0 }}>
+        Dans l'attente de votre retour, veuillez agréer, <strong>Monsieur le Directeur Général</strong>,
+        l'expression de ma haute considération.
+      </p>
+    </>);
+  };
+
+  const getGroups = () => {
+    switch (type) {
+      case "domaine": return [
+        { title: "Identification de l'entité", fields: [
+          { label: "Organisation", key: "nom_organisation" },
+          { label: "Type d'entité", key: "type_entite" },
+          { label: "Adresse", key: "adresse", full: true },
+        ]},
+        { title: "Contact référent", fields: [
+          { label: "Nom du contact", key: "nom_contact" },
+          { label: "Adresse e-mail", key: "email" },
+          { label: "Téléphone", key: "telephone" },
+        ]},
+        { title: "Détails de la demande", fields: [
+          { label: "Domaine souhaité", key: "domaine_souhaite" },
+          { label: "Description de l'usage", key: "usage_description", full: true },
+        ]},
+      ];
+      case "equipement": return [
+        { title: "Institution bénéficiaire", fields: [
+          { label: "Organisation", key: "nom_organisation" },
+          { label: "Ville", key: "localisation_ville" },
+          { label: "Adresse exacte", key: "adresse_exacte", full: true },
+        ]},
+        { title: "Spécifications techniques", fields: [
+          { label: "Type d'équipement", key: "type_equipement" },
+          { label: "Quantité demandée", key: "quantite" },
+          { label: "Description des besoins", key: "description_besoins", full: true },
+        ]},
+        { title: "Responsable du suivi", fields: [
+          { label: "Responsable", key: "responsable_nom" },
+          { label: "E-mail responsable", key: "responsable_email" },
+          { label: "Téléphone responsable", key: "responsable_telephone" },
+          { label: "Date d'installation souhaitée", key: "date_souhaitee" },
+        ]},
+      ];
+      case "panne": return [
+        { title: "Nature de l'incident", fields: [
+          { label: "Type de panne", key: "type_panne" },
+          { label: "Niveau d'urgence", key: "niveau_urgence" },
+          { label: "Utilisateurs affectés", key: "nombre_utilisateurs_affectes" },
+        ]},
+        { title: "Localisation & équipement concerné", fields: [
+          { label: "Localisation", key: "localisation" },
+          { label: "Équipement concerné", key: "equipement_concerne" },
+          { label: "Description de la panne", key: "description_panne", full: true },
+        ]},
+        { title: "Contact déclarant", fields: [
+          { label: "Déclarant", key: "nom_declarant" },
+          { label: "E-mail déclarant", key: "email_declarant" },
+          { label: "Téléphone déclarant", key: "telephone_declarant" },
+        ]},
+      ];
+      case "email": return [
+        { title: "Institution bénéficiaire", fields: [
+          { label: "Organisation", key: "nom_organisation" },
+          { label: "Type d'entité", key: "type_entite" },
+          { label: "Adresse", key: "adresse", full: true },
+        ]},
+        { title: "Détails de la demande", fields: [
+          { label: "Domaine de messagerie", key: "domaine_email" },
+          { label: "Nombre de comptes", key: "nombre_comptes" },
+        ]},
+        { title: "Responsable du suivi", fields: [
+          { label: "Responsable", key: "nom_responsable" },
+          { label: "Adresse e-mail", key: "email" },
+          { label: "Téléphone", key: "telephone" },
+        ]},
+      ];
+      case "plateforme": return [
+        { title: "Identification du projet", fields: [
+          { label: "Nom du projet", key: "nom_projet" },
+          { label: "Type de plateforme", key: "type_plateforme" },
+          { label: "Organisation", key: "nom_organisation" },
+          { label: "Type d'entité", key: "type_entite" },
+        ]},
+        { title: "Description & besoins", fields: [
+          { label: "Description des besoins", key: "description_besoins", full: true },
+        ]},
+        { title: "Responsable du projet", fields: [
+          { label: "Responsable", key: "nom_responsable" },
+          { label: "Adresse e-mail", key: "email" },
+          { label: "Téléphone", key: "telephone" },
+          { label: "Date souhaitée", key: "date_souhaitee" },
+        ]},
+      ];
+      default: return [
+        { title: "Expéditeur", fields: [
+          { label: "Nom complet", key: "nom" },
+          { label: "Adresse e-mail", key: "email" },
+        ]},
+        { title: "Contenu du message", fields: [
+          { label: "Message", key: "message", full: true },
+        ]},
+      ];
+    }
+  };
+
   const DocContent = () => (
     <div id="adetic-doc-printable" style={{
       fontFamily: "'Segoe UI', 'Arial', sans-serif",
@@ -255,9 +475,6 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
               border: `2px solid ${cfg.color}60`, flexShrink: 0,
             }} />
             <div>
-              <div style={{ color: "rgba(255,255,255,0.5)", fontSize: 9, letterSpacing: 3, fontWeight: 600, marginBottom: 4 }}>
-                RÉPUBLIQUE DU TCHAD
-              </div>
               <div style={{ color: WHITE, fontWeight: 900, fontSize: 22, letterSpacing: 3 }}>ADETIC</div>
               <div style={{ color: cfg.color, fontSize: 8.5, letterSpacing: 2, fontWeight: 700, marginTop: 3 }}>
                 AGENCE DE DÉVELOPPEMENT DES TECHNOLOGIES DE L'INFORMATION ET DE LA COMMUNICATION
@@ -294,24 +511,20 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
           padding: "12px 0",
           display: "flex", alignItems: "center", gap: 12,
         }}>
-          <span style={{ fontSize: 18 }}>{cfg.icon}</span>
           <div>
-            <div style={{ color: cfg.color, fontSize: 8, fontWeight: 800, letterSpacing: 3 }}>
-              SERVICE {cfg.section}
+            <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 8, fontWeight: 700, letterSpacing: 2.5, marginBottom: 3 }}>
+              {cfg.direction}
             </div>
-            <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 13, fontWeight: 600, marginTop: 2 }}>
+            <div style={{ color: cfg.color, fontSize: 8.5, fontWeight: 800, letterSpacing: 2, marginBottom: 3 }}>
+              {cfg.service}
+            </div>
+            <div style={{ color: "rgba(255,255,255,0.8)", fontSize: 12, fontWeight: 600 }}>
               {cfg.label}
             </div>
           </div>
-          <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{
-              background: `${scColor(item.statut)}20`,
-              border: `1.5px solid ${scColor(item.statut)}60`,
-              color: scColor(item.statut),
-              fontSize: 10, fontWeight: 800, padding: "4px 14px",
-              borderRadius: 100, letterSpacing: 1,
-            }}>
-              {item.statut || "Nouveau"}
+          <div style={{ marginLeft: "auto" }}>
+            <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 8.5, letterSpacing: 1 }}>
+              Reçu le {dateReception}
             </div>
           </div>
         </div>
@@ -323,44 +536,23 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
       {/* CORPS DU DOCUMENT */}
       <div style={{ padding: "30px 40px", position: "relative", zIndex: 1 }}>
 
-        {/* Titre de section */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 12, marginBottom: 22,
-        }}>
-          <div style={{ width: 3, height: 18, background: cfg.color, borderRadius: 2, flexShrink: 0 }} />
-          <div style={{ color: TEXT, fontSize: 12, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
-            Informations du dossier
+        {/* COURRIER FORMEL */}
+        <div style={{ marginBottom: 28 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 14 }}>
+            <div style={{ width: 3, height: 16, background: cfg.color, borderRadius: 2, flexShrink: 0 }} />
+            <div style={{ color: TEXT, fontSize: 11, fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase" }}>
+              Courrier de demande
+            </div>
           </div>
-        </div>
-
-        {/* Grille de champs */}
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 0, border: "1px solid rgba(15,23,42,0.1)", borderRadius: 10, overflow: "hidden", marginBottom: 24 }}>
-          {displayFields.map(([key, val], idx) => {
-            const isLong = ["description", "message", "usage", "besoins", "panne", "adresse"].some(w => key.includes(w));
-            const isEven = idx % 2 === 0;
-            return (
-              <div key={key} style={{
-                gridColumn: isLong ? "1 / -1" : "auto",
-                borderBottom: idx < displayFields.length - (isLong ? 1 : 2) ? "1px solid rgba(15,23,42,0.07)" : "none",
-                borderRight: !isLong && isEven ? "1px solid rgba(15,23,42,0.07)" : "none",
-              }}>
-                <div style={{
-                  padding: "13px 16px",
-                  background: isEven && !isLong ? "rgba(0,201,167,0.02)" : "transparent",
-                }}>
-                  <div style={{
-                    color: cfg.color, fontSize: 9, fontWeight: 800,
-                    letterSpacing: 1.5, textTransform: "uppercase", marginBottom: 5,
-                  }}>
-                    {FIELD_LABELS[key] || key.replace(/_/g, " ")}
-                  </div>
-                  <div style={{ color: TEXT, fontSize: 13.5, lineHeight: 1.6, fontWeight: 500, minHeight: isLong ? 60 : "auto" }}>
-                    {String(val ?? "—") || "—"}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          <div style={{
+            padding: "20px 24px",
+            background: "rgba(15,23,42,0.012)",
+            border: "1px solid rgba(15,23,42,0.09)",
+            borderRadius: 10,
+            borderLeft: `4px solid ${cfg.color}`,
+          }}>
+            {genFormalText()}
+          </div>
         </div>
 
         {/* VISA DE TRAITEMENT */}
@@ -402,22 +594,16 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
                 Directeur Général · ADETIC
               </div>
             </div>
-            {/* Cachet circulaire DG */}
+            {/* Zone cachet */}
             <div style={{ flexShrink: 0, textAlign: "center" }}>
               <div style={{ color: MUTED, fontSize: 10, fontWeight: 600, letterSpacing: 1, marginBottom: 12, textTransform: "uppercase" }}>
                 Cachet officiel
               </div>
               <div style={{
-                width: 90, height: 90, borderRadius: "50%",
-                border: `2px dashed ${cfg.color}55`,
-                display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center",
-                gap: 3,
-              }}>
-                <div style={{ fontSize: 18 }}>🏛️</div>
-                <div style={{ color: `${cfg.color}70`, fontSize: 7, fontWeight: 800, letterSpacing: 1.5, textAlign: "center", lineHeight: 1.4 }}>
-                  ADETIC<br />OFFICIEL
-                </div>
-              </div>
+                width: 100, height: 100, borderRadius: "50%",
+                border: `1.5px dashed rgba(15,23,42,0.18)`,
+                background: "rgba(15,23,42,0.012)",
+              }} />
             </div>
           </div>
         </div>
@@ -580,6 +766,28 @@ function OverviewTab({ stats, domaines, equipements, pannes, emails, plateformes
             </div>
             <div style={{ color: TEXT, fontSize: 34, fontWeight: 900, lineHeight: 1 }}>{val ?? 0}</div>
             <div style={{ color: MUTED, fontSize: 13, marginTop: 6 }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── Légende des statuts ── */}
+      <div style={{
+        background: WHITE, borderRadius: 12, padding: "12px 18px",
+        border: "1px solid rgba(15,23,42,0.06)", marginBottom: 20,
+        display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap",
+      }}>
+        <span style={{ color: MUTED, fontSize: 10.5, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", flexShrink: 0 }}>Légende des statuts :</span>
+        {[
+          { color: "#F7B731", label: "En attente / Nouveau / Ouvert", desc: "action requise" },
+          { color: "#4F8EF7", label: "En cours",                       desc: "en traitement" },
+          { color: ACCENT,    label: "Lu",                              desc: "pris en compte" },
+          { color: "#20BF6B", label: "Traité / Résolu / Répondu",       desc: "clôturé" },
+          { color: "#FC5C65", label: "Rejeté",                          desc: "refusé" },
+        ].map((s, i) => (
+          <div key={i} style={{ display: "flex", alignItems: "center", gap: 5, padding: "4px 10px", background: `${s.color}0d`, borderRadius: 20, border: `1px solid ${s.color}30` }}>
+            <div style={{ width: 7, height: 7, borderRadius: "50%", background: s.color, flexShrink: 0 }} />
+            <span style={{ fontSize: 11.5, color: TEXT, fontWeight: 600 }}>{s.label}</span>
+            <span style={{ fontSize: 11, color: MUTED }}>· {s.desc}</span>
           </div>
         ))}
       </div>
@@ -1104,6 +1312,19 @@ function DossiersTab({ type, data, onDataChange }) {
         ))}
       </div>
 
+      {/* ── Légende statuts ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: 8, flexWrap: "wrap", marginBottom: 16, padding: "10px 14px", background: WHITE, borderRadius: 10, border: "1px solid rgba(15,23,42,0.06)" }}>
+        <span style={{ color: MUTED, fontSize: 10, fontWeight: 700, letterSpacing: 1, textTransform: "uppercase", marginRight: 4 }}>Légende :</span>
+        {cfg.statuts.filter(s => s !== "Tous").map(s => (
+          <div key={s} style={{ display: "flex", alignItems: "center", gap: 5 }}>
+            <div style={{ width: 8, height: 8, borderRadius: "50%", background: scColor(s), flexShrink: 0 }} />
+            <span style={{ fontSize: 11.5, color: MUTED, fontWeight: 500 }}>{s}</span>
+          </div>
+        ))}
+        <span style={{ color: "rgba(15,23,42,0.18)", margin: "0 4px" }}>·</span>
+        <span style={{ fontSize: 11, color: MUTED, fontStyle: "italic" }}>Cliquez sur une ligne pour ouvrir et modifier le dossier</span>
+      </div>
+
       <div style={{ background: WHITE, borderRadius: 16, border: "1px solid rgba(15,23,42,0.06)", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", overflow: "hidden" }}>
         {filtered.length === 0 ? (
           <div style={{ padding: 56, textAlign: "center", color: MUTED, fontSize: 14 }}>
@@ -1309,6 +1530,52 @@ export default function AdminPage({ onBack }) {
 
   useEffect(() => { if (auth) loadAll(); }, [auth]);
 
+  /* ── Realtime : mise à jour automatique quand un formulaire est soumis ── */
+  useEffect(() => {
+    if (!auth) return;
+
+    const addOrUpdate = (setter, row) =>
+      setter(prev =>
+        prev.some(r => r.id === row.id)
+          ? prev.map(r => r.id === row.id ? row : r)
+          : [row, ...prev]
+      );
+
+    const channels = [
+      supabase.channel("rt-contacts")
+        .on("postgres_changes", { event: "*", schema: "public", table: "contacts" },
+          ({ new: row }) => row && addOrUpdate(setContacts, row))
+        .subscribe(),
+
+      supabase.channel("rt-domaines")
+        .on("postgres_changes", { event: "*", schema: "public", table: "demandes_domaine" },
+          ({ new: row }) => row && addOrUpdate(setDomaines, row))
+        .subscribe(),
+
+      supabase.channel("rt-equipements")
+        .on("postgres_changes", { event: "*", schema: "public", table: "demandes_equipement" },
+          ({ new: row }) => row && addOrUpdate(setEquipements, row))
+        .subscribe(),
+
+      supabase.channel("rt-pannes")
+        .on("postgres_changes", { event: "*", schema: "public", table: "declarations_panne" },
+          ({ new: row }) => row && addOrUpdate(setPannes, row))
+        .subscribe(),
+
+      supabase.channel("rt-emails")
+        .on("postgres_changes", { event: "*", schema: "public", table: "demandes_email" },
+          ({ new: row }) => row && addOrUpdate(setEmails, row))
+        .subscribe(),
+
+      supabase.channel("rt-plateformes")
+        .on("postgres_changes", { event: "*", schema: "public", table: "demandes_plateforme" },
+          ({ new: row }) => row && addOrUpdate(setPlateformes, row))
+        .subscribe(),
+    ];
+
+    return () => channels.forEach(c => supabase.removeChannel(c));
+  }, [auth]);
+
   const handleLogin = (e) => {
     e.preventDefault();
     if (password === ADMIN_PASSWORD) { setAuth(true); setPwErr(""); }
@@ -1373,14 +1640,17 @@ export default function AdminPage({ onBack }) {
     { id: "contacts", label: "Messages", Icon: Eye },
   ];
 
-  const pendingCount = [...domaines, ...equipements].filter(d => d.statut === "En attente").length;
   const activePannes = pannes.filter(p => ["Ouvert", "En cours"].includes(p.statut)).length;
   const newContacts = contacts.filter(c => !c.statut || c.statut === "Nouveau").length;
+  const pendingCount = [...domaines, ...equipements, ...emails, ...plateformes].filter(d => d.statut === "En attente").length;
 
   const badgeFor = (id) => ({
-    domaines: domaines.filter(d => d.statut === "En attente").length,
-    pannes: activePannes,
-    contacts: newContacts,
+    domaines:    domaines.filter(d => d.statut === "En attente").length,
+    equipements: equipements.filter(d => d.statut === "En attente").length,
+    pannes:      activePannes,
+    emails:      emails.filter(d => d.statut === "En attente").length,
+    plateformes: plateformes.filter(d => d.statut === "En attente").length,
+    contacts:    newContacts,
   }[id] || 0);
 
   const stats = {
@@ -1441,6 +1711,22 @@ export default function AdminPage({ onBack }) {
             );
           })}
         </nav>
+
+        {/* ── Légende des badges ── */}
+        <div style={{ margin: "0 10px 10px", padding: "13px 14px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}>
+          <div style={{ color: "rgba(255,255,255,0.28)", fontSize: 8.5, letterSpacing: 1.8, fontWeight: 700, textTransform: "uppercase", marginBottom: 10 }}>Légende des badges</div>
+          <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+            {[
+              { bg: ACCENT,     text: "Requêtes en attente de traitement" },
+              { bg: "#FC5C65",  text: "Pannes actives (ouvertes / en cours)" },
+            ].map(({ bg, text }, i) => (
+              <div key={i} style={{ display: "flex", alignItems: "flex-start", gap: 8 }}>
+                <div style={{ width: 18, height: 18, borderRadius: 9, background: bg, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 9, color: WHITE, fontWeight: 800, flexShrink: 0 }}>N</div>
+                <span style={{ color: "rgba(255,255,255,0.42)", fontSize: 10.5, lineHeight: 1.55 }}>{text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         <div style={{ padding: "10px 10px 22px" }}>
           <div style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: 12 }}>
