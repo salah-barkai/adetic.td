@@ -116,7 +116,7 @@ img  { max-width: 100%; display: block; }
 
   /* Direction */
   .direction-grid            { grid-template-columns: 1fr; gap: 24px; padding: 24px 20px; text-align: center; }
-  .direction-photo           { width: 160px !important; height: 200px !important; margin: 0 auto; }
+  .direction-photo           { width: 100% !important; height: 340px !important; margin: 0 auto 8px; border-radius: 16px !important; }
   .direction-stats           { justify-content: center !important; }
 
   /* Fibre */
@@ -163,7 +163,7 @@ img  { max-width: 100%; display: block; }
   .hero-stats-grid           { grid-template-columns: repeat(2, 1fr); }
   .footer-grid               { grid-template-columns: 1fr; gap: 20px; }
   .direction-grid            { padding: 18px 14px; }
-  .direction-photo           { width: 130px !important; height: 160px !important; }
+  .direction-photo           { width: 100% !important; height: 300px !important; }
   .org-grid                  { grid-template-columns: 1fr !important; gap: 12px !important; }
   .dg-card                   { padding: 22px 16px !important; max-width: 100%; }
   .eservice-form-card        { padding: 14px !important; }
