@@ -260,7 +260,7 @@ function Navbar({ scrolled, activePage, onNavigate }) {
       borderBottom: scrolled ? "1px solid rgba(15,23,42,0.08)" : "none",
       transition: "all 0.4s ease",
     }}>
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72, padding: "0 2rem" }}>
+      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", height: 72, padding: "0 1.2rem" }}>
         {/* Logo */}
         <div style={{ display: "flex", alignItems: "center", gap: 12, cursor: "pointer" }} onClick={() => onNavigate("home")}>
           <div style={{ width: 42, height: 42, borderRadius: 10, overflow: "hidden", flexShrink: 0 }}>
@@ -485,7 +485,7 @@ function HeroSection() {
         }} />
       ))}
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", width: "100%", position: "relative", zIndex: 1, paddingTop: 100 }}>
+      <div className="hero-inner" style={{ maxWidth: 1200, margin: "0 auto", width: "100%", position: "relative", zIndex: 1, paddingTop: 100 }}>
         <div className="hero-grid">
           <div>
             <div style={{
@@ -514,7 +514,7 @@ function HeroSection() {
               L'ADETIC est l'agence publique chargée de piloter le développement numérique et la transformation digitale de l'État tchadien. Connecter chaque coin du pays à l'économie mondiale.
             </p>
 
-            <div style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+            <div className="hero-buttons">
               <a href="#missions" style={{
                 background: SECONDARY_COLOR,
                 color: PRIMARY_COLOR, textDecoration: "none",
@@ -546,7 +546,7 @@ function HeroSection() {
         </div>
 
         {/* Stats bar */}
-        <div className="hero-stats-grid" style={{
+        <div className="hero-stats-grid hero-stats-bar" style={{
           marginTop: 80,
           gap: 1,
           background: "rgba(0,201,167,0.1)",
@@ -592,8 +592,8 @@ function ArticleCard({ article, onClick, featured = false }) {
         onClick={onClick}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
+        className="art-featured-grid"
         style={{
-          display: "grid", gridTemplateColumns: "1fr 1fr",
           borderRadius: 24, overflow: "hidden",
           boxShadow: hovered ? "0 24px 64px rgba(15,23,42,0.18)" : "0 8px 32px rgba(15,23,42,0.10)",
           cursor: "pointer", transition: "box-shadow 0.3s",
@@ -833,7 +833,7 @@ function ActualitesSection({ actualites, loading, fetchError, onNavigate }) {
 
         {/* Grille des autres articles */}
         {rest.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+          <div className="actualites-cards-grid">
             {rest.map((a, i) => (
               <AnimSection key={i} delay={i * 80}>
                 <ArticleCard article={a} onClick={() => setOpenArticle(a)} />
@@ -895,7 +895,7 @@ function EquipePage({ onBack }) {
     <div style={{ background: SITE_BG_COLOR, minHeight: "100vh", paddingTop: 72 }}>
 
       {/* ── Header ── */}
-      <div style={{
+      <div className="equipe-header" style={{
         background: `linear-gradient(135deg, ${BG_COLOR} 0%, #0d1a3d 60%, #091428 100%)`,
         padding: "64px 2rem 80px", position: "relative", overflow: "hidden",
       }}>
@@ -925,7 +925,7 @@ function EquipePage({ onBack }) {
       </div>
 
       {/* ── Corps ── */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "72px 2rem 88px" }}>
+      <div className="equipe-body" style={{ maxWidth: 1100, margin: "0 auto", padding: "72px 2rem 88px" }}>
 
         {/* Direction Générale */}
         <div style={{ textAlign: "center", marginBottom: 60 }}>
@@ -934,9 +934,9 @@ function EquipePage({ onBack }) {
             <span style={{ color: SECONDARY_COLOR, fontSize: 11, fontWeight: 800, letterSpacing: 2.5, textTransform: "uppercase" }}>Direction Générale</span>
           </div>
 
-          <div style={{ display: "flex", justifyContent: "center", gap: 28, flexWrap: "wrap" }}>
+          <div className="dg-cards">
             {DG_TEAM.map((p, i) => (
-              <div key={i} style={{
+              <div key={i} className="dg-card" style={{
                 background: `linear-gradient(145deg, ${BG_COLOR} 0%, #0d1a3d 100%)`,
                 borderRadius: 24, padding: "40px 48px",
                 border: `1px solid ${SECONDARY_COLOR}30`,
@@ -969,7 +969,7 @@ function EquipePage({ onBack }) {
           </div>
         </div>
 
-        <div className="org-grid" style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 20 }}>
+        <div className="org-grid">
           {DIRS.map((p, i) => (
             <div key={i}
               style={{
@@ -1048,7 +1048,7 @@ function ArticlesPage({ actualites, loading, fetchError, onBack }) {
         )}
 
         {rest.length > 0 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 22 }}>
+          <div className="actualites-cards-grid">
             {rest.map((article, i) => (
               <ArticleCard key={i} article={article} onClick={() => setOpenArticle(article)} />
             ))}
@@ -1159,7 +1159,7 @@ function DomainForm() {
         <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Remplissez ce formulaire pour demander l'enregistrement d'un nom de domaine sous l'extension nationale .td</p>
       </div>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20 }}>
           <FormField label="Nom de domaine souhaité *" hint="Exemple : monentreprise.td">
             <input type="text" required value={form.domaine_souhaite} onChange={handleChange("domaine_souhaite")} placeholder="mondomaine.td" style={FORM_INPUT_STYLE} />
           </FormField>
@@ -1247,7 +1247,7 @@ function EquipmentForm() {
         <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Soumettez une demande d'installation d'équipements réseau ou de télécommunications sur votre site</p>
       </div>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20 }}>
           <FormField label="Type d'équipement *">
             <select required value={form.type_equipement} onChange={handleChange("type_equipement")} style={FORM_INPUT_STYLE}>
               <option value="">Sélectionnez...</option>
@@ -1346,7 +1346,7 @@ function PanneForm() {
         <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Signalez une panne technique pour une prise en charge rapide par nos équipes spécialisées</p>
       </div>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20 }}>
           <FormField label="Type de panne *">
             <select required value={form.type_panne} onChange={handleChange("type_panne")} style={FORM_INPUT_STYLE}>
               <option value="">Sélectionnez...</option>
@@ -1439,7 +1439,7 @@ function EmailForm() {
         <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Demandez la création de comptes email professionnels sous votre nom de domaine</p>
       </div>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20 }}>
           <FormField label="Nom de l'organisation *">
             <input type="text" required value={form.nom_organisation} onChange={handleChange("nom_organisation")} placeholder="Nom de votre organisation" style={FORM_INPUT_STYLE} />
           </FormField>
@@ -1523,7 +1523,7 @@ function PlateformeForm() {
         <p style={{ color: MUTED_TEXT, fontSize: 14, margin: 0 }}>Soumettez votre projet de plateforme ou application numérique — site web, portail, système de gestion</p>
       </div>
       <form onSubmit={handleSubmit}>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20 }}>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(280px, 100%), 1fr))", gap: 20 }}>
           <FormField label="Nom du projet *">
             <input type="text" required value={form.nom_projet} onChange={handleChange("nom_projet")} placeholder="Ex : Portail citoyen de N'Djaména" style={FORM_INPUT_STYLE} />
           </FormField>
@@ -1654,20 +1654,16 @@ function EServicesPage({ onBack }) {
               <h2 style={{ color: TEXT_COLOR, fontSize: 24, fontWeight: 800, margin: "0 0 12px" }}>Choisissez un service</h2>
               <p style={{ color: MUTED_TEXT, fontSize: 15, margin: 0 }}>Sélectionnez le type de demande que vous souhaitez soumettre</p>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))", gap: 24, marginBottom: 60 }}>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(min(260px, 100%), 1fr))", gap: 24, marginBottom: 60 }}>
               {eServices.map(s => (
                 <ServiceCard key={s.id} service={s} onClick={() => setActiveService(s.id)} />
               ))}
             </div>
-            <div style={{
-              background: "linear-gradient(135deg, rgba(0,201,167,0.06), rgba(79,142,247,0.06))",
-              border: "1px solid rgba(0,201,167,0.15)", borderRadius: 16,
-              padding: "28px 32px", display: "flex", alignItems: "flex-start", gap: 20,
-            }}>
+            <div className="eservice-info-box">
               <div style={{ fontSize: 28, marginTop: 2 }}>ℹ️</div>
-              <div>
+              <div style={{ flex: 1 }}>
                 <h3 style={{ color: TEXT_COLOR, fontSize: 16, fontWeight: 700, margin: "0 0 16px" }}>Comment ça marche ?</h3>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: 16 }}>
+                <div className="eservice-info-steps">
                   {[
                     { step: "1", text: "Choisissez votre service" },
                     { step: "2", text: "Remplissez le formulaire" },
@@ -1694,10 +1690,7 @@ function EServicesPage({ onBack }) {
               color: TEXT_COLOR, padding: "8px 16px", borderRadius: 8, cursor: "pointer",
               fontSize: 13, fontWeight: 500, marginBottom: 36,
             }}>← Retour aux services</button>
-            <div style={{
-              background: "#fff", border: "1px solid rgba(15,23,42,0.06)",
-              borderRadius: 20, padding: 40, boxShadow: "0 4px 24px rgba(15,23,42,0.06)",
-            }}>
+            <div className="eservice-form-card">
               {activeService === "domaine" && <DomainForm />}
               {activeService === "equipement" && <EquipmentForm />}
               {activeService === "panne" && <PanneForm />}
@@ -2069,7 +2062,7 @@ function ContactSection() {
                 }}>Envoyer un autre message</button>
               </div>
             ) : (
-              <div style={{
+              <div className="contact-form-card" style={{
                 background: "#ffffff", border: "1px solid rgba(15,23,42,0.1)",
                 borderRadius: 20, padding: "32px",
                 boxShadow: "0 4px 24px rgba(15,23,42,0.06)",
@@ -2282,7 +2275,7 @@ export default function App() {
   }
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif", background: SITE_BG_COLOR, minHeight: "100vh" }}>
+    <div style={{ fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif", background: SITE_BG_COLOR, minHeight: "100vh", overflowX: "hidden", maxWidth: "100vw" }}>
       <Navbar scrolled={scrolled} activePage={page} onNavigate={handleNavigate} />
       {page === "articles" ? (
         <ArticlesPage actualites={actualites} loading={loadingActualites} fetchError={fetchError} onBack={() => setPage("home")} />
