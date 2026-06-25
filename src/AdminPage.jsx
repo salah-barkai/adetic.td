@@ -108,12 +108,12 @@ function FieldArea({ label, ...props }) {
 const DND  = "DIRECTION DE NOM DE DOMAINE ET ADRESSE IP";
 const DITIC = "DIRECTION DES INFRASTRUCTURES TIC";
 const TYPE_CFG = {
-  domaine:    { label: "Demande de nom de domaine .td",       color: "#00C9A7", icon: "🌐", section: "DOMAINES .TD",    direction: DND,   service: "SERVICE DE NOM DE DOMAINE ET ADRESSE IP" },
-  equipement: { label: "Demande d'équipements réseau",        color: "#4F8EF7", icon: "🖥️", section: "ÉQUIPEMENTS",     direction: DITIC, service: "SERVICE DES INFRASTRUCTURES TIC"          },
-  panne:      { label: "Déclaration de panne technique",      color: "#FC5C65", icon: "⚡", section: "INCIDENTS RÉSEAU", direction: DITIC, service: "SERVICE DES INFRASTRUCTURES TIC"          },
-  email:      { label: "Demande de création de mails",        color: "#A55EEA", icon: "📧", section: "MAILS",           direction: DND,   service: "SERVICE DE NOM DE DOMAINE ET ADRESSE IP" },
-  plateforme: { label: "Demande de conception de plateforme", color: "#20BF6B", icon: "💻", section: "PLATEFORMES",     direction: DND,   service: "SERVICE DE SYSTÈME D'INFORMATION"        },
-  contact:    { label: "Message du formulaire de contact",    color: "#4F8EF7", icon: "✉️", section: "CONTACTS",         direction: "DIRECTION DE LA COMMUNICATION", service: "SERVICE DE COMMUNICATION" },
+  domaine:    { label: "Demande de nom de domaine .td",       color: "#00C9A7", section: "DOMAINES .TD",    direction: DND,   service: "SERVICE DE NOM DE DOMAINE ET ADRESSE IP" },
+  equipement: { label: "Demande d'equipements reseau",        color: "#4F8EF7", section: "EQUIPEMENTS",     direction: DITIC, service: "SERVICE DES INFRASTRUCTURES TIC"          },
+  panne:      { label: "Declaration de panne technique",      color: "#FC5C65", section: "INCIDENTS RESEAU", direction: DITIC, service: "SERVICE DES INFRASTRUCTURES TIC"          },
+  email:      { label: "Demande de creation de mails",        color: "#A55EEA", section: "MAILS",           direction: DND,   service: "SERVICE DE NOM DE DOMAINE ET ADRESSE IP" },
+  plateforme: { label: "Demande de conception de plateforme", color: "#20BF6B", section: "PLATEFORMES",     direction: DND,   service: "SERVICE DE SYSTEME D'INFORMATION"        },
+  contact:    { label: "Message du formulaire de contact",    color: "#4F8EF7", section: "CONTACTS",         direction: "DIRECTION DE LA COMMUNICATION", service: "SERVICE DE COMMUNICATION" },
 };
 
 const FIELD_LABELS = {
@@ -448,25 +448,28 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
         zIndex: 1,
       }} />
 
-      {/* EN-TÊTE OFFICIEL */}
+      {/* BANDEAU REPUBLIQUE DU TCHAD */}
+      <div style={{
+        background: "#f8f9fa", borderBottom: "3px solid #e2e8f0",
+        padding: "10px 40px", position: "relative", zIndex: 1,
+        display: "flex", justifyContent: "space-between", alignItems: "center",
+      }}>
+        <div style={{ textAlign: "center", flex: 1 }}>
+          <div style={{ fontSize: 9, fontWeight: 900, letterSpacing: 2.5, color: "#1e293b", textTransform: "uppercase" }}>REPUBLIQUE DU TCHAD</div>
+          <div style={{ fontSize: 8.5, color: "#64748b", letterSpacing: 1.5, marginTop: 2 }}>Unité — Travail — Progrès</div>
+        </div>
+        <div style={{ width: 1, height: 36, background: "#cbd5e1", margin: "0 24px" }} />
+        <div style={{ textAlign: "center", flex: 1 }}>
+          <div style={{ fontSize: 9, fontWeight: 700, letterSpacing: 1.5, color: "#1e293b", textTransform: "uppercase" }}>Ministère des Postes et des Nouvelles Technologies</div>
+          <div style={{ fontSize: 8.5, color: "#64748b", letterSpacing: 1, marginTop: 2 }}>N'Djamena, République du Tchad</div>
+        </div>
+      </div>
+
+      {/* EN-TÊTE OFFICIEL ADETIC */}
       <div style={{
         background: `linear-gradient(135deg, ${DARK} 0%, #0d1a3d 60%, #091428 100%)`,
-        padding: "28px 40px 0 40px", position: "relative", zIndex: 1,
+        padding: "24px 40px 0 40px", position: "relative", zIndex: 1,
       }}>
-        {/* Motif géométrique décoratif */}
-        <div style={{ position: "absolute", right: 0, top: 0, opacity: 0.07 }}>
-          {[0,1,2,3,4].map(row => (
-            <div key={row} style={{ display: "flex" }}>
-              {[0,1,2,3,4,5,6,7].map(col => (
-                <div key={col} style={{
-                  width: 18, height: 18, margin: 3, borderRadius: "50%",
-                  background: cfg.color,
-                }} />
-              ))}
-            </div>
-          ))}
-        </div>
-
         {/* République + Institution */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 20 }}>
           <div style={{ display: "flex", gap: 18, alignItems: "center" }}>
@@ -477,10 +480,10 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
             <div>
               <div style={{ color: WHITE, fontWeight: 900, fontSize: 22, letterSpacing: 3 }}>ADETIC</div>
               <div style={{ color: cfg.color, fontSize: 8.5, letterSpacing: 2, fontWeight: 700, marginTop: 3 }}>
-                AGENCE DE DÉVELOPPEMENT DES TECHNOLOGIES DE L'INFORMATION ET DE LA COMMUNICATION
+                AGENCE DE DEVELOPPEMENT DES TECHNOLOGIES DE L'INFORMATION ET DE LA COMMUNICATION
               </div>
               <div style={{ color: "rgba(255,255,255,0.35)", fontSize: 9.5, marginTop: 4 }}>
-                Loi n° 012/PR/2014 · B.P. 6531 N'Djaména, Tchad
+                Loi n° 012/PR/2014 · B.P. 6531 N'Djamena, Tchad · adetic.td
               </div>
             </div>
           </div>
@@ -490,13 +493,13 @@ function DossierDocument({ item, type, onClose, onStatusUpdate }) {
             border: `1px solid ${cfg.color}40`, padding: "14px 20px", textAlign: "right",
           }}>
             <div style={{ color: cfg.color, fontSize: 8, letterSpacing: 2.5, fontWeight: 800, marginBottom: 6 }}>
-              RÉFÉRENCE DU DOSSIER
+              REFERENCE DU DOSSIER
             </div>
             <div style={{ color: WHITE, fontWeight: 900, fontSize: 18, letterSpacing: 2, fontFamily: "'Courier New', monospace" }}>
               {ref}
             </div>
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 9.5, marginTop: 6 }}>
-              Reçu le {dateReception}
+              Recu le {dateReception}
             </div>
             <div style={{ color: "rgba(255,255,255,0.4)", fontSize: 9.5, marginTop: 2 }}>
               Émis le {dateEmission}
@@ -861,11 +864,11 @@ function OverviewTab({ stats, domaines, equipements, pannes, emails, plateformes
 }
 
 /* ─── ACTIVITÉS RÉCENTES ─── */
-function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, contacts }) {
-  const [filter, setFilter]       = useState("Tous");
-  const [search, setSearch]       = useState("");
+function ActivitesTab({ domaines, equipements, pannes, emails, plateformes }) {
+  const [filter, setFilter]         = useState("Tous");
+  const [search, setSearch]         = useState("");
   const [generating, setGenerating] = useState(false);
-  const [logoB64, setLogoB64]     = useState("");
+  const [logoB64, setLogoB64]       = useState("");
 
   useEffect(() => {
     fetch(siteLogo)
@@ -875,15 +878,14 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
   }, []);
 
   const TYPE_META = {
-    domaine:    { label: "Domaine .td",   color: "#00C9A7", icon: "🌐" },
-    equipement: { label: "Équipement",    color: "#4F8EF7", icon: "🖥️" },
-    panne:      { label: "Panne",         color: "#FC5C65", icon: "⚡" },
-    email:      { label: "Mail",          color: "#A55EEA", icon: "📧" },
-    plateforme: { label: "Plateforme",    color: "#20BF6B", icon: "💻" },
-    contact:    { label: "Contact",       color: "#F7B731", icon: "✉️" },
+    domaine:    { label: "Domaine .td",  color: "#00C9A7" },
+    equipement: { label: "Equipement",   color: "#4F8EF7" },
+    panne:      { label: "Panne",        color: "#FC5C65" },
+    email:      { label: "Mail",         color: "#A55EEA" },
+    plateforme: { label: "Plateforme",   color: "#20BF6B" },
   };
 
-  const buildActivities = () => [
+  const allActivities = [
     ...domaines.map(d => ({
       ...d, _type: "domaine",
       _label: d.domaine_souhaite || d.nom_organisation || "—",
@@ -919,25 +921,15 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
       _org:   d.nom_organisation || "—",
       _ref:   `ADETIC-PLATEFORME-${String(d.id).padStart(5,"0")}`,
     })),
-    ...contacts.map(d => ({
-      ...d, _type: "contact",
-      _label: d.nom || "Anonyme",
-      _sub:   (d.message || "").substring(0, 70) || "—",
-      _org:   d.email || "—",
-      _ref:   `ADETIC-CONTACT-${String(d.id).padStart(5,"0")}`,
-    })),
   ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
 
-  const allActivities = buildActivities();
-
   const FILTERS = [
-    { id: "Tous",        label: "Tous",         count: allActivities.length },
-    { id: "domaine",     label: "Domaines",     count: domaines.length },
-    { id: "equipement",  label: "Équipements",  count: equipements.length },
-    { id: "panne",       label: "Pannes",       count: pannes.length },
-    { id: "email",       label: "Mails",        count: emails.length },
-    { id: "plateforme",  label: "Plateformes",  count: plateformes.length },
-    { id: "contact",     label: "Contacts",     count: contacts.length },
+    { id: "Tous",       label: "Tous",        count: allActivities.length },
+    { id: "domaine",    label: "Domaines",    count: domaines.length },
+    { id: "equipement", label: "Equipements", count: equipements.length },
+    { id: "panne",      label: "Pannes",      count: pannes.length },
+    { id: "email",      label: "Mails",       count: emails.length },
+    { id: "plateforme", label: "Plateformes", count: plateformes.length },
   ];
 
   const filtered = allActivities
@@ -949,98 +941,154 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
       (a._org || "").toLowerCase().includes(search.toLowerCase())
     );
 
-  /* ── Génération du rapport PDF ── */
+  /* ── Rapport PDF professionnel ── */
   const handlePDF = () => {
     setGenerating(true);
-    const now = new Date();
+    const now     = new Date();
     const dateStr = now.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
     const timeStr = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
 
-    const summaryRows = FILTERS.filter(f => f.id !== "Tous").map(f => {
-      const items = allActivities.filter(a => a._type === f.id);
-      const pending = items.filter(a => ["En attente","Ouvert","Nouveau"].includes(a.statut || "")).length;
-      const done    = items.filter(a => ["Traité","Résolu","Répondu","Fermé"].includes(a.statut || "")).length;
-      const inprog  = items.filter(a => a.statut === "En cours").length;
-      return `<tr>
-        <td style="padding:8px 12px;font-weight:600;">${TYPE_META[f.id].icon} ${f.label}</td>
-        <td style="padding:8px 12px;text-align:center;font-weight:700;">${f.count}</td>
-        <td style="padding:8px 12px;text-align:center;color:#F7B731;font-weight:600;">${pending}</td>
-        <td style="padding:8px 12px;text-align:center;color:#4F8EF7;font-weight:600;">${inprog}</td>
-        <td style="padding:8px 12px;text-align:center;color:#20BF6B;font-weight:600;">${done}</td>
+    const SERVICES = [
+      { id: "domaine",    label: "Nom de Domaine .td",       data: domaines    },
+      { id: "equipement", label: "Installation d'Equipements", data: equipements },
+      { id: "panne",      label: "Declarations de Panne",     data: pannes      },
+      { id: "email",      label: "Creation de Mails",         data: emails      },
+      { id: "plateforme", label: "Conception de Plateforme",  data: plateformes },
+    ];
+
+    const totalPending = allActivities.filter(a => ["En attente","Ouvert","Nouveau"].includes(a.statut || "")).length;
+    const totalInProg  = allActivities.filter(a => a.statut === "En cours").length;
+    const totalDone    = allActivities.filter(a => ["Traité","Résolu","Répondu","Fermé"].includes(a.statut || "")).length;
+    const totalRej     = allActivities.filter(a => a.statut === "Rejeté").length;
+
+    const summaryRows = SERVICES.map((s, idx) => {
+      const pending = s.data.filter(d => ["En attente","Ouvert","Nouveau"].includes(d.statut || "")).length;
+      const inprog  = s.data.filter(d => d.statut === "En cours").length;
+      const done    = s.data.filter(d => ["Traité","Résolu","Répondu","Fermé"].includes(d.statut || "")).length;
+      const rej     = s.data.filter(d => d.statut === "Rejeté").length;
+      const bg = idx % 2 === 0 ? "#f8fafc" : "#ffffff";
+      return `<tr style="background:${bg};">
+        <td style="padding:9px 12px;font-size:11px;font-weight:600;border:1px solid #dde3ec;">${s.label}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:11px;font-weight:700;border:1px solid #dde3ec;">${s.data.length}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:11px;border:1px solid #dde3ec;">${pending}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:11px;border:1px solid #dde3ec;">${inprog}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:11px;border:1px solid #dde3ec;">${done}</td>
+        <td style="padding:9px 12px;text-align:center;font-size:11px;border:1px solid #dde3ec;">${rej}</td>
       </tr>`;
     }).join("");
 
-    const detailRows = allActivities.map(a => {
+    const detailRows = allActivities.map((a, idx) => {
       const meta = TYPE_META[a._type] || {};
       const date = a.created_at ? new Date(a.created_at).toLocaleDateString("fr-FR") : "—";
-      const sc = scColor(a.statut);
-      return `<tr style="border-bottom:1px solid #e2e8f0;">
-        <td style="padding:7px 10px;font-size:10px;color:#64748b;white-space:nowrap;">${date}</td>
-        <td style="padding:7px 10px;"><span style="background:${meta.color}18;color:${meta.color};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;">${meta.icon} ${meta.label}</span></td>
-        <td style="padding:7px 10px;font-size:11px;color:#64748b;white-space:nowrap;">${a._ref}</td>
-        <td style="padding:7px 10px;font-size:12px;font-weight:600;max-width:180px;">${a._label}</td>
-        <td style="padding:7px 10px;font-size:11px;color:#64748b;max-width:150px;">${a._sub}</td>
-        <td style="padding:7px 10px;"><span style="background:${sc}18;color:${sc};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;">${a.statut || "Nouveau"}</span></td>
+      const statut = a.statut || "Nouveau";
+      const bg = idx % 2 === 0 ? "#f8fafc" : "#ffffff";
+      return `<tr style="background:${bg};">
+        <td style="padding:7px 10px;font-size:10px;border:1px solid #dde3ec;white-space:nowrap;">${date}</td>
+        <td style="padding:7px 10px;font-size:10px;font-weight:600;border:1px solid #dde3ec;">${meta.label || "—"}</td>
+        <td style="padding:7px 10px;font-size:10px;border:1px solid #dde3ec;white-space:nowrap;">${a._ref}</td>
+        <td style="padding:7px 10px;font-size:11px;font-weight:600;border:1px solid #dde3ec;max-width:170px;overflow:hidden;">${a._label}</td>
+        <td style="padding:7px 10px;font-size:10px;color:#475569;border:1px solid #dde3ec;max-width:150px;overflow:hidden;">${a._sub}</td>
+        <td style="padding:7px 10px;font-size:10px;font-weight:700;border:1px solid #dde3ec;white-space:nowrap;">${statut}</td>
       </tr>`;
     }).join("");
 
-    const logoTag = logoB64 ? `<img src="${logoB64}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;" />` : `<div style="width:52px;height:52px;border-radius:12px;background:#00C9A7;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;">A</div>`;
+    const logoHtml = logoB64
+      ? `<img src="${logoB64}" style="width:60px;height:60px;object-fit:cover;border:2px solid #00C9A7;" />`
+      : `<div style="width:60px;height:60px;background:#00C9A7;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:22px;color:#fff;border:2px solid #00C9A7;">A</div>`;
 
     const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
-<title>Rapport Activités ADETIC — ${dateStr}</title>
+<title>Rapport des Activites E-Services — ADETIC — ${dateStr}</title>
 <style>
   *{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
-  @page{size:A4 portrait;margin:15mm 14mm;}
-  body{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;font-size:12px;}
+  @page{size:A4 portrait;margin:18mm 16mm;}
+  body{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;font-size:11px;line-height:1.5;}
   table{width:100%;border-collapse:collapse;}
-  thead tr{background:#f8fafc;}
-  th{padding:9px 10px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid #e2e8f0;}
-  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;}
-  .section-title{font-size:13px;font-weight:800;color:#0f172a;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}
+  th{padding:9px 12px;text-align:left;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;background:#1e293b;color:#fff;border:1px solid #1e293b;}
+  .kpi-box{border:1px solid #cbd5e1;padding:14px 16px;text-align:center;}
+  .section-title{font-size:12px;font-weight:800;color:#0f172a;margin:22px 0 8px;padding:6px 10px;background:#e2e8f0;border-left:4px solid #00C9A7;letter-spacing:.3px;text-transform:uppercase;}
+  .separator{border:none;border-top:1px solid #cbd5e1;margin:12px 0;}
 </style></head><body>
-<div style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#050A19,#0d1a3d);padding:20px 24px;border-radius:12px;margin-bottom:22px;">
-  ${logoTag}
-  <div>
-    <div style="color:#fff;font-weight:900;font-size:18px;letter-spacing:.5px;">ADETIC</div>
-    <div style="color:#00C9A7;font-size:9px;letter-spacing:2px;font-weight:700;">AGENCE DE DÉVELOPPEMENT DES TIC DU TCHAD</div>
-  </div>
-  <div style="margin-left:auto;text-align:right;">
-    <div style="color:#fff;font-size:14px;font-weight:800;">Rapport des Activités</div>
-    <div style="color:rgba(255,255,255,.55);font-size:10px;">Généré le ${dateStr} à ${timeStr}</div>
-  </div>
-</div>
 
-<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;">
+<!-- EN-TETE INSTITUTIONNEL -->
+<table style="margin-bottom:18px;border-bottom:3px solid #00C9A7;padding-bottom:14px;">
+  <tr>
+    <td style="width:72px;vertical-align:middle;">${logoHtml}</td>
+    <td style="padding-left:16px;vertical-align:middle;">
+      <div style="font-size:18px;font-weight:900;letter-spacing:.5px;color:#050A19;">ADETIC</div>
+      <div style="font-size:9.5px;font-weight:700;color:#475569;letter-spacing:1.5px;text-transform:uppercase;margin-top:2px;">Agence de Developpement des Technologies de l'Information et de la Communication du Tchad</div>
+      <div style="font-size:9px;color:#94a3b8;margin-top:3px;">Avenue du Colonel Hassan Moursal Kourda — BP 240, N'Djamena, Tchad — adetic.td</div>
+    </td>
+    <td style="text-align:right;vertical-align:middle;padding-left:20px;">
+      <div style="font-size:14px;font-weight:900;color:#050A19;white-space:nowrap;">RAPPORT DES ACTIVITES</div>
+      <div style="font-size:10px;color:#475569;margin-top:4px;">E-Services — Systeme de gestion numerique</div>
+      <div style="font-size:9px;color:#94a3b8;margin-top:3px;">Genere le ${dateStr} a ${timeStr}</div>
+      <div style="font-size:9px;color:#94a3b8;">Ref. : ADETIC/RAPP/${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")}</div>
+    </td>
+  </tr>
+</table>
+
+<!-- INDICATEURS CLES -->
+<div style="display:grid;grid-template-columns:repeat(5,1fr);gap:0;margin-bottom:20px;border:1px solid #cbd5e1;">
   ${[
-    { label:"Total activités", val: allActivities.length, color:"#00C9A7" },
-    { label:"En attente / Ouvert", val: allActivities.filter(a=>["En attente","Ouvert","Nouveau"].includes(a.statut||"")).length, color:"#F7B731" },
-    { label:"Traités / Résolus", val: allActivities.filter(a=>["Traité","Résolu","Répondu","Fermé"].includes(a.statut||"")).length, color:"#20BF6B" },
-  ].map(c=>`<div style="background:${c.color}0d;border:1px solid ${c.color}30;border-radius:10px;padding:14px 16px;">
-    <div style="color:${c.color};font-size:26px;font-weight:900;">${c.val}</div>
-    <div style="color:#64748b;font-size:11px;margin-top:2px;">${c.label}</div>
+    { label:"Total dossiers",  val: allActivities.length },
+    { label:"En attente",      val: totalPending },
+    { label:"En cours",        val: totalInProg  },
+    { label:"Traites",         val: totalDone    },
+    { label:"Rejetes",         val: totalRej     },
+  ].map((k,i)=>`<div class="kpi-box" style="${i>0?"border-left:1px solid #cbd5e1;":""}">
+    <div style="font-size:22px;font-weight:900;color:#050A19;">${k.val}</div>
+    <div style="font-size:9px;font-weight:600;color:#64748b;text-transform:uppercase;letter-spacing:.5px;margin-top:3px;">${k.label}</div>
   </div>`).join("")}
 </div>
 
-<div class="section-title">Résumé par service</div>
-<table style="margin-bottom:22px;">
+<!-- RESUME PAR SERVICE -->
+<div class="section-title">I. Synthese par service</div>
+<table style="margin-bottom:20px;">
   <thead><tr>
-    <th>Service</th><th style="text-align:center;">Total</th>
-    <th style="text-align:center;">En attente</th><th style="text-align:center;">En cours</th><th style="text-align:center;">Traités</th>
+    <th style="width:38%;">Service</th>
+    <th style="text-align:center;width:12%;">Total</th>
+    <th style="text-align:center;width:12%;">En attente</th>
+    <th style="text-align:center;width:12%;">En cours</th>
+    <th style="text-align:center;width:13%;">Traites</th>
+    <th style="text-align:center;width:13%;">Rejetes</th>
   </tr></thead>
-  <tbody>${summaryRows}</tbody>
+  <tbody>
+    ${summaryRows}
+    <tr style="background:#1e293b;font-weight:700;">
+      <td style="padding:9px 12px;font-size:11px;color:#fff;border:1px solid #334155;">TOTAL GENERAL</td>
+      <td style="padding:9px 12px;text-align:center;font-size:11px;color:#fff;border:1px solid #334155;">${allActivities.length}</td>
+      <td style="padding:9px 12px;text-align:center;font-size:11px;color:#fff;border:1px solid #334155;">${totalPending}</td>
+      <td style="padding:9px 12px;text-align:center;font-size:11px;color:#fff;border:1px solid #334155;">${totalInProg}</td>
+      <td style="padding:9px 12px;text-align:center;font-size:11px;color:#fff;border:1px solid #334155;">${totalDone}</td>
+      <td style="padding:9px 12px;text-align:center;font-size:11px;color:#fff;border:1px solid #334155;">${totalRej}</td>
+    </tr>
+  </tbody>
 </table>
 
-<div class="section-title">Détail de toutes les activités (${allActivities.length})</div>
+<!-- DETAIL COMPLET -->
+<div class="section-title">II. Detail de l'ensemble des dossiers (${allActivities.length} entrees)</div>
 <table>
   <thead><tr>
-    <th>Date</th><th>Type</th><th>Référence</th><th>Libellé</th><th>Détail</th><th>Statut</th>
+    <th>Date de reception</th>
+    <th>Service</th>
+    <th>Reference</th>
+    <th>Objet / Organisation</th>
+    <th>Contact / Detail</th>
+    <th>Statut</th>
   </tr></thead>
   <tbody>${detailRows}</tbody>
 </table>
 
-<div style="margin-top:24px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;color:#94a3b8;font-size:9.5px;">
-  <span>ADETIC © ${now.getFullYear()} — Document confidentiel — adetic.td</span>
-  <span>Rapport généré le ${dateStr} à ${timeStr}</span>
+<!-- PIED DE PAGE -->
+<div style="margin-top:28px;padding-top:10px;border-top:2px solid #1e293b;display:flex;justify-content:space-between;align-items:flex-end;">
+  <div>
+    <div style="font-size:9px;font-weight:700;color:#0f172a;text-transform:uppercase;letter-spacing:.5px;">ADETIC — Document officiel confidentiel</div>
+    <div style="font-size:8.5px;color:#94a3b8;margin-top:2px;">Etablissement public administratif · Loi n° 012/PR/2014 · N'Djamena, Tchad</div>
+  </div>
+  <div style="text-align:right;">
+    <div style="font-size:9px;color:#475569;">Rapport genere le ${dateStr} a ${timeStr}</div>
+    <div style="font-size:9px;color:#94a3b8;">Ref. ADETIC/RAPP/${now.getFullYear()}/${String(now.getMonth()+1).padStart(2,"0")} · adetic.td</div>
+  </div>
 </div>
 </body></html>`;
 
@@ -1065,7 +1113,7 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
           </div>
           <div>
             <h2 style={{ color: TEXT, fontSize: 22, fontWeight: 800, margin: "0 0 3px" }}>Activités récentes</h2>
-            <p style={{ color: MUTED, fontSize: 14, margin: 0 }}>{allActivities.length} activité(s) au total toutes catégories</p>
+            <p style={{ color: MUTED, fontSize: 14, margin: 0 }}>{allActivities.length} dossier(s) E-Services au total</p>
           </div>
         </div>
         <button onClick={handlePDF} disabled={generating} style={{
@@ -1085,7 +1133,7 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
       </div>
 
       {/* Mini-stats par type */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12, marginBottom: 24 }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(5, 1fr)", gap: 12, marginBottom: 24 }}>
         {FILTERS.filter(f => f.id !== "Tous").map(f => {
           const meta = TYPE_META[f.id];
           return (
@@ -1093,15 +1141,15 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
               style={{
                 background: filter === f.id ? `${meta.color}14` : WHITE,
                 border: `1.5px solid ${filter === f.id ? meta.color : "rgba(15,23,42,0.07)"}`,
-                borderRadius: 12, padding: "14px 12px", cursor: "pointer",
+                borderRadius: 12, padding: "16px 14px", cursor: "pointer",
                 textAlign: "center", transition: "all 0.18s",
               }}
               onMouseEnter={e => { if (filter !== f.id) e.currentTarget.style.borderColor = meta.color; }}
               onMouseLeave={e => { if (filter !== f.id) e.currentTarget.style.borderColor = "rgba(15,23,42,0.07)"; }}
             >
-              <div style={{ fontSize: 20, marginBottom: 6 }}>{meta.icon}</div>
-              <div style={{ color: filter === f.id ? meta.color : TEXT, fontSize: 20, fontWeight: 900 }}>{f.count}</div>
-              <div style={{ color: MUTED, fontSize: 10, marginTop: 3, fontWeight: 600 }}>{f.label}</div>
+              <div style={{ color: filter === f.id ? meta.color : TEXT, fontSize: 26, fontWeight: 900 }}>{f.count}</div>
+              <div style={{ color: filter === f.id ? meta.color : MUTED, fontSize: 11, marginTop: 4, fontWeight: 600 }}>{f.label}</div>
+              <div style={{ width: 28, height: 3, background: filter === f.id ? meta.color : "rgba(15,23,42,0.08)", borderRadius: 2, margin: "8px auto 0" }} />
             </div>
           );
         })}
@@ -1172,7 +1220,7 @@ function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, cont
                         fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
                         border: `1px solid ${meta.color}30`,
                       }}>
-                        {meta.icon} {meta.label}
+                        {meta.label}
                       </span>
                     </td>
                     <td style={{ padding: "12px 14px", color: meta.color, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{item._ref}</td>
@@ -1295,12 +1343,14 @@ function ArticleForm({ initial, editingId, onSubmit, onCancel, submitting, err }
                 background: uploadDone ? "#20BF6B" : uploading ? ACCENT : "rgba(15,23,42,0.55)",
                 color: WHITE, fontSize: 11, fontWeight: 700, padding: "4px 12px", borderRadius: 100,
               }}>
-                {uploading ? "⏳ Envoi…" : uploadDone ? "✓ Uploadé" : "Image actuelle"}
+                {uploading ? "Envoi en cours…" : uploadDone ? "Importé" : "Image actuelle"}
               </div>
             </>
           ) : (
             <>
-              <div style={{ fontSize: 32 }}>🖼️</div>
+              <div style={{ width: 44, height: 44, borderRadius: 12, background: "rgba(15,23,42,0.06)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="rgba(15,23,42,0.35)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" /><circle cx="8.5" cy="8.5" r="1.5" /><polyline points="21 15 16 10 5 21" /></svg>
+              </div>
               <div style={{ color: MUTED, fontSize: 13, fontWeight: 500, textAlign: "center" }}>
                 Cliquez ou glissez une image ici<br />
                 <span style={{ fontSize: 11, color: "rgba(15,23,42,0.35)" }}>JPG, PNG, WebP — max 5 Mo</span>
@@ -1465,7 +1515,7 @@ function ArticlesTab({ articles, onRefresh }) {
           onClick={() => setDeleteConfirm(null)}>
           <div style={{ background: WHITE, borderRadius: 18, padding: "38px 42px", maxWidth: 420, width: "90%", boxShadow: "0 40px 80px rgba(0,0,0,0.4)" }}
             onClick={e => e.stopPropagation()}>
-            <div style={{ fontSize: 44, textAlign: "center", marginBottom: 16 }}>🗑️</div>
+            <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}><Trash2 size={40} color="#ef4444" strokeWidth={1.5} /></div>
             <div style={{ color: TEXT, fontWeight: 800, fontSize: 17, textAlign: "center", marginBottom: 10 }}>Supprimer cet article ?</div>
             <div style={{ color: MUTED, fontSize: 13, textAlign: "center", marginBottom: 28, lineHeight: 1.6 }}>
               Cette action est irréversible. L'article sera définitivement supprimé de la base de données.
@@ -1753,7 +1803,8 @@ function ContactsTab({ contacts, onDataChange }) {
 
       {filtered.length === 0 ? (
         <div style={{ background: WHITE, borderRadius: 16, padding: 56, textAlign: "center", color: MUTED, fontSize: 14, border: "1px solid rgba(15,23,42,0.06)" }}>
-          <div style={{ fontSize: 44, marginBottom: 12 }}>✉️</div>Aucun message
+          <div style={{ display: "flex", justifyContent: "center", marginBottom: 12 }}><Mail size={40} color="rgba(15,23,42,0.2)" strokeWidth={1.3} /></div>
+          Aucun message
         </div>
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
@@ -1984,12 +2035,12 @@ export default function AdminPage({ onBack }) {
   };
 
   return (
-    <div style={{ display: "flex", minHeight: "100vh", fontFamily: "'Segoe UI', system-ui, sans-serif", background: BG }}>
+    <div style={{ display: "flex", height: "100vh", overflow: "hidden", fontFamily: "'Segoe UI', system-ui, sans-serif", background: BG }}>
       {/* Sidebar */}
       <div style={{
         width: 250, flexShrink: 0, background: DARK,
         display: "flex", flexDirection: "column",
-        position: "sticky", top: 0, height: "100vh", overflowY: "auto",
+        height: "100vh", overflowY: "auto",
       }}>
         <div style={{ padding: "26px 18px 18px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -2080,7 +2131,7 @@ export default function AdminPage({ onBack }) {
       </div>
 
       {/* Contenu principal */}
-      <div style={{ flex: 1, padding: "40px 36px", overflowY: "auto", minHeight: "100vh" }}>
+      <div style={{ flex: 1, padding: "40px 36px", overflowY: "auto", height: "100vh" }}>
         {loading ? (
           <div style={{ display: "flex", alignItems: "center", justifyContent: "center", height: "60vh", color: MUTED, fontSize: 15, flexDirection: "column", gap: 14 }}>
             <RefreshCw size={28} color={ACCENT} style={{ animation: "spin 1s linear infinite" }} />
@@ -2089,7 +2140,7 @@ export default function AdminPage({ onBack }) {
         ) : (
           <>
             {tab === "overview"    && <OverviewTab stats={stats} domaines={domaines} equipements={equipements} pannes={pannes} emails={emails} plateformes={plateformes} contacts={contacts} />}
-            {tab === "activites"   && <ActivitesTab domaines={domaines} equipements={equipements} pannes={pannes} emails={emails} plateformes={plateformes} contacts={contacts} />}
+            {tab === "activites"   && <ActivitesTab domaines={domaines} equipements={equipements} pannes={pannes} emails={emails} plateformes={plateformes} />}
             {tab === "articles"    && <ArticlesTab articles={articles} onRefresh={loadAll} />}
             {tab === "domaines" && <DossiersTab type="domaine" data={domaines} onDataChange={setDomaines} />}
             {tab === "equipements" && <DossiersTab type="equipement" data={equipements} onDataChange={setEquipements} />}
