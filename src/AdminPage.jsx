@@ -6,7 +6,7 @@ import {
 import {
   LayoutDashboard, Newspaper, Globe, Monitor, AlertTriangle,
   Mail, Layers, Plus, Eye, LogOut, Printer, ChevronLeft,
-  Clock, RefreshCw, Pencil, Trash2,
+  Clock, RefreshCw, Pencil, Trash2, Activity, FileDown, Search,
 } from "lucide-react";
 import siteLogo from "../images/logo.jpg";
 import {
@@ -856,27 +856,344 @@ function OverviewTab({ stats, domaines, equipements, pannes, emails, plateformes
         </div>
       </div>
 
-      {/* Recent activity */}
-      <div style={{
-        background: WHITE, borderRadius: 16, padding: 28,
-        border: "1px solid rgba(15,23,42,0.06)", boxShadow: "0 2px 12px rgba(15,23,42,0.05)",
-      }}>
-        <div style={{ color: TEXT, fontSize: 15, fontWeight: 700, marginBottom: 18 }}>Activité récente</div>
-        {(stats.recent || []).length === 0 ? (
-          <div style={{ color: MUTED, textAlign: "center", padding: 24, fontSize: 14 }}>Aucune activité récente</div>
-        ) : stats.recent.map((item, i, arr) => (
-          <div key={i} style={{
-            display: "flex", alignItems: "center", gap: 14,
-            padding: "13px 0", borderBottom: i < arr.length - 1 ? "1px solid rgba(15,23,42,0.06)" : "none",
-          }}>
-            <div style={{ width: 8, height: 8, borderRadius: "50%", background: item.color, flexShrink: 0 }} />
-            <div style={{ flex: 1 }}>
-              <div style={{ color: TEXT, fontSize: 13, fontWeight: 600 }}>{item.label}</div>
-              <div style={{ color: MUTED, fontSize: 12 }}>{item.sub}</div>
-            </div>
-            <StatusBadge statut={item.statut} />
+    </div>
+  );
+}
+
+/* ─── ACTIVITÉS RÉCENTES ─── */
+function ActivitesTab({ domaines, equipements, pannes, emails, plateformes, contacts }) {
+  const [filter, setFilter]       = useState("Tous");
+  const [search, setSearch]       = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [logoB64, setLogoB64]     = useState("");
+
+  useEffect(() => {
+    fetch(siteLogo)
+      .then(r => r.blob())
+      .then(blob => new Promise(res => { const rd = new FileReader(); rd.onloadend = () => res(rd.result); rd.readAsDataURL(blob); }))
+      .then(setLogoB64).catch(() => {});
+  }, []);
+
+  const TYPE_META = {
+    domaine:    { label: "Domaine .td",   color: "#00C9A7", icon: "🌐" },
+    equipement: { label: "Équipement",    color: "#4F8EF7", icon: "🖥️" },
+    panne:      { label: "Panne",         color: "#FC5C65", icon: "⚡" },
+    email:      { label: "Mail",          color: "#A55EEA", icon: "📧" },
+    plateforme: { label: "Plateforme",    color: "#20BF6B", icon: "💻" },
+    contact:    { label: "Contact",       color: "#F7B731", icon: "✉️" },
+  };
+
+  const buildActivities = () => [
+    ...domaines.map(d => ({
+      ...d, _type: "domaine",
+      _label: d.domaine_souhaite || d.nom_organisation || "—",
+      _sub:   d.nom_contact || d.email || "—",
+      _org:   d.nom_organisation || "—",
+      _ref:   `ADETIC-DOMAINE-${String(d.id).padStart(5,"0")}`,
+    })),
+    ...equipements.map(d => ({
+      ...d, _type: "equipement",
+      _label: d.nom_organisation || d.type_equipement || "—",
+      _sub:   d.responsable_nom || d.localisation_ville || "—",
+      _org:   d.nom_organisation || "—",
+      _ref:   `ADETIC-EQUIPEMENT-${String(d.id).padStart(5,"0")}`,
+    })),
+    ...pannes.map(d => ({
+      ...d, _type: "panne",
+      _label: d.type_panne || d.localisation || "—",
+      _sub:   d.nom_declarant || d.niveau_urgence || "—",
+      _org:   d.localisation || "—",
+      _ref:   `ADETIC-PANNE-${String(d.id).padStart(5,"0")}`,
+    })),
+    ...emails.map(d => ({
+      ...d, _type: "email",
+      _label: d.nom_organisation || d.domaine_email || "—",
+      _sub:   d.nom_responsable || "—",
+      _org:   d.nom_organisation || "—",
+      _ref:   `ADETIC-EMAIL-${String(d.id).padStart(5,"0")}`,
+    })),
+    ...plateformes.map(d => ({
+      ...d, _type: "plateforme",
+      _label: d.nom_projet || d.nom_organisation || "—",
+      _sub:   d.nom_responsable || d.type_plateforme || "—",
+      _org:   d.nom_organisation || "—",
+      _ref:   `ADETIC-PLATEFORME-${String(d.id).padStart(5,"0")}`,
+    })),
+    ...contacts.map(d => ({
+      ...d, _type: "contact",
+      _label: d.nom || "Anonyme",
+      _sub:   (d.message || "").substring(0, 70) || "—",
+      _org:   d.email || "—",
+      _ref:   `ADETIC-CONTACT-${String(d.id).padStart(5,"0")}`,
+    })),
+  ].sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0));
+
+  const allActivities = buildActivities();
+
+  const FILTERS = [
+    { id: "Tous",        label: "Tous",         count: allActivities.length },
+    { id: "domaine",     label: "Domaines",     count: domaines.length },
+    { id: "equipement",  label: "Équipements",  count: equipements.length },
+    { id: "panne",       label: "Pannes",       count: pannes.length },
+    { id: "email",       label: "Mails",        count: emails.length },
+    { id: "plateforme",  label: "Plateformes",  count: plateformes.length },
+    { id: "contact",     label: "Contacts",     count: contacts.length },
+  ];
+
+  const filtered = allActivities
+    .filter(a => filter === "Tous" || a._type === filter)
+    .filter(a => !search.trim() ||
+      a._label.toLowerCase().includes(search.toLowerCase()) ||
+      a._sub.toLowerCase().includes(search.toLowerCase()) ||
+      a._ref.toLowerCase().includes(search.toLowerCase()) ||
+      (a._org || "").toLowerCase().includes(search.toLowerCase())
+    );
+
+  /* ── Génération du rapport PDF ── */
+  const handlePDF = () => {
+    setGenerating(true);
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("fr-FR", { day: "2-digit", month: "long", year: "numeric" });
+    const timeStr = now.toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+
+    const summaryRows = FILTERS.filter(f => f.id !== "Tous").map(f => {
+      const items = allActivities.filter(a => a._type === f.id);
+      const pending = items.filter(a => ["En attente","Ouvert","Nouveau"].includes(a.statut || "")).length;
+      const done    = items.filter(a => ["Traité","Résolu","Répondu","Fermé"].includes(a.statut || "")).length;
+      const inprog  = items.filter(a => a.statut === "En cours").length;
+      return `<tr>
+        <td style="padding:8px 12px;font-weight:600;">${TYPE_META[f.id].icon} ${f.label}</td>
+        <td style="padding:8px 12px;text-align:center;font-weight:700;">${f.count}</td>
+        <td style="padding:8px 12px;text-align:center;color:#F7B731;font-weight:600;">${pending}</td>
+        <td style="padding:8px 12px;text-align:center;color:#4F8EF7;font-weight:600;">${inprog}</td>
+        <td style="padding:8px 12px;text-align:center;color:#20BF6B;font-weight:600;">${done}</td>
+      </tr>`;
+    }).join("");
+
+    const detailRows = allActivities.map(a => {
+      const meta = TYPE_META[a._type] || {};
+      const date = a.created_at ? new Date(a.created_at).toLocaleDateString("fr-FR") : "—";
+      const sc = scColor(a.statut);
+      return `<tr style="border-bottom:1px solid #e2e8f0;">
+        <td style="padding:7px 10px;font-size:10px;color:#64748b;white-space:nowrap;">${date}</td>
+        <td style="padding:7px 10px;"><span style="background:${meta.color}18;color:${meta.color};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;">${meta.icon} ${meta.label}</span></td>
+        <td style="padding:7px 10px;font-size:11px;color:#64748b;white-space:nowrap;">${a._ref}</td>
+        <td style="padding:7px 10px;font-size:12px;font-weight:600;max-width:180px;">${a._label}</td>
+        <td style="padding:7px 10px;font-size:11px;color:#64748b;max-width:150px;">${a._sub}</td>
+        <td style="padding:7px 10px;"><span style="background:${sc}18;color:${sc};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700;white-space:nowrap;">${a.statut || "Nouveau"}</span></td>
+      </tr>`;
+    }).join("");
+
+    const logoTag = logoB64 ? `<img src="${logoB64}" style="width:52px;height:52px;border-radius:12px;object-fit:cover;" />` : `<div style="width:52px;height:52px;border-radius:12px;background:#00C9A7;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:18px;color:#fff;">A</div>`;
+
+    const html = `<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<title>Rapport Activités ADETIC — ${dateStr}</title>
+<style>
+  *{box-sizing:border-box;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;}
+  @page{size:A4 portrait;margin:15mm 14mm;}
+  body{margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;font-size:12px;}
+  table{width:100%;border-collapse:collapse;}
+  thead tr{background:#f8fafc;}
+  th{padding:9px 10px;text-align:left;font-size:10px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:.7px;border-bottom:2px solid #e2e8f0;}
+  .badge{display:inline-block;padding:2px 9px;border-radius:20px;font-size:10px;font-weight:700;}
+  .section-title{font-size:13px;font-weight:800;color:#0f172a;margin:20px 0 10px;padding-bottom:6px;border-bottom:2px solid #e2e8f0;}
+</style></head><body>
+<div style="display:flex;align-items:center;gap:16px;background:linear-gradient(135deg,#050A19,#0d1a3d);padding:20px 24px;border-radius:12px;margin-bottom:22px;">
+  ${logoTag}
+  <div>
+    <div style="color:#fff;font-weight:900;font-size:18px;letter-spacing:.5px;">ADETIC</div>
+    <div style="color:#00C9A7;font-size:9px;letter-spacing:2px;font-weight:700;">AGENCE DE DÉVELOPPEMENT DES TIC DU TCHAD</div>
+  </div>
+  <div style="margin-left:auto;text-align:right;">
+    <div style="color:#fff;font-size:14px;font-weight:800;">Rapport des Activités</div>
+    <div style="color:rgba(255,255,255,.55);font-size:10px;">Généré le ${dateStr} à ${timeStr}</div>
+  </div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:22px;">
+  ${[
+    { label:"Total activités", val: allActivities.length, color:"#00C9A7" },
+    { label:"En attente / Ouvert", val: allActivities.filter(a=>["En attente","Ouvert","Nouveau"].includes(a.statut||"")).length, color:"#F7B731" },
+    { label:"Traités / Résolus", val: allActivities.filter(a=>["Traité","Résolu","Répondu","Fermé"].includes(a.statut||"")).length, color:"#20BF6B" },
+  ].map(c=>`<div style="background:${c.color}0d;border:1px solid ${c.color}30;border-radius:10px;padding:14px 16px;">
+    <div style="color:${c.color};font-size:26px;font-weight:900;">${c.val}</div>
+    <div style="color:#64748b;font-size:11px;margin-top:2px;">${c.label}</div>
+  </div>`).join("")}
+</div>
+
+<div class="section-title">Résumé par service</div>
+<table style="margin-bottom:22px;">
+  <thead><tr>
+    <th>Service</th><th style="text-align:center;">Total</th>
+    <th style="text-align:center;">En attente</th><th style="text-align:center;">En cours</th><th style="text-align:center;">Traités</th>
+  </tr></thead>
+  <tbody>${summaryRows}</tbody>
+</table>
+
+<div class="section-title">Détail de toutes les activités (${allActivities.length})</div>
+<table>
+  <thead><tr>
+    <th>Date</th><th>Type</th><th>Référence</th><th>Libellé</th><th>Détail</th><th>Statut</th>
+  </tr></thead>
+  <tbody>${detailRows}</tbody>
+</table>
+
+<div style="margin-top:24px;padding-top:14px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;color:#94a3b8;font-size:9.5px;">
+  <span>ADETIC © ${now.getFullYear()} — Document confidentiel — adetic.td</span>
+  <span>Rapport généré le ${dateStr} à ${timeStr}</span>
+</div>
+</body></html>`;
+
+    const pw = window.open("", "_blank", "width=900,height=1200");
+    if (pw) {
+      pw.document.write(html);
+      pw.document.close();
+      pw.focus();
+      setTimeout(() => { pw.print(); setGenerating(false); }, 700);
+    } else {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <div>
+      {/* En-tête */}
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 28, flexWrap: "wrap", gap: 16 }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 16 }}>
+          <div style={{ width: 50, height: 50, borderRadius: 14, background: `${ACCENT}18`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <Activity size={22} color={ACCENT} strokeWidth={1.8} />
           </div>
-        ))}
+          <div>
+            <h2 style={{ color: TEXT, fontSize: 22, fontWeight: 800, margin: "0 0 3px" }}>Activités récentes</h2>
+            <p style={{ color: MUTED, fontSize: 14, margin: 0 }}>{allActivities.length} activité(s) au total toutes catégories</p>
+          </div>
+        </div>
+        <button onClick={handlePDF} disabled={generating} style={{
+          display: "flex", alignItems: "center", gap: 8,
+          background: generating ? "rgba(0,201,167,0.6)" : ACCENT,
+          color: WHITE, border: "none", padding: "11px 22px",
+          borderRadius: 10, cursor: generating ? "not-allowed" : "pointer",
+          fontWeight: 700, fontSize: 14, boxShadow: "0 4px 16px rgba(0,201,167,0.28)",
+          transition: "all 0.2s",
+        }}
+          onMouseEnter={e => { if (!generating) e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,201,167,0.42)"; }}
+          onMouseLeave={e => e.currentTarget.style.boxShadow = "0 4px 16px rgba(0,201,167,0.28)"}
+        >
+          <FileDown size={16} />
+          {generating ? "Génération…" : "Rapport PDF complet"}
+        </button>
+      </div>
+
+      {/* Mini-stats par type */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(6, 1fr)", gap: 12, marginBottom: 24 }}>
+        {FILTERS.filter(f => f.id !== "Tous").map(f => {
+          const meta = TYPE_META[f.id];
+          return (
+            <div key={f.id} onClick={() => setFilter(f.id === filter ? "Tous" : f.id)}
+              style={{
+                background: filter === f.id ? `${meta.color}14` : WHITE,
+                border: `1.5px solid ${filter === f.id ? meta.color : "rgba(15,23,42,0.07)"}`,
+                borderRadius: 12, padding: "14px 12px", cursor: "pointer",
+                textAlign: "center", transition: "all 0.18s",
+              }}
+              onMouseEnter={e => { if (filter !== f.id) e.currentTarget.style.borderColor = meta.color; }}
+              onMouseLeave={e => { if (filter !== f.id) e.currentTarget.style.borderColor = "rgba(15,23,42,0.07)"; }}
+            >
+              <div style={{ fontSize: 20, marginBottom: 6 }}>{meta.icon}</div>
+              <div style={{ color: filter === f.id ? meta.color : TEXT, fontSize: 20, fontWeight: 900 }}>{f.count}</div>
+              <div style={{ color: MUTED, fontSize: 10, marginTop: 3, fontWeight: 600 }}>{f.label}</div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Barre filtre + recherche */}
+      <div style={{ display: "flex", gap: 12, marginBottom: 18, flexWrap: "wrap", alignItems: "center" }}>
+        <div style={{ display: "flex", gap: 6, flexWrap: "wrap" }}>
+          {FILTERS.map(f => (
+            <button key={f.id} onClick={() => setFilter(f.id)} style={{
+              padding: "7px 14px", borderRadius: 8, fontSize: 12.5, cursor: "pointer",
+              fontWeight: filter === f.id ? 700 : 500, transition: "all 0.18s",
+              border: `1px solid ${filter === f.id ? ACCENT : "rgba(15,23,42,0.1)"}`,
+              background: filter === f.id ? `${ACCENT}14` : WHITE,
+              color: filter === f.id ? ACCENT : MUTED,
+            }}>
+              {f.label}{f.id !== "Tous" ? ` (${f.count})` : ""}
+            </button>
+          ))}
+        </div>
+        <div style={{ marginLeft: "auto", position: "relative", minWidth: 220 }}>
+          <Search size={14} style={{ position: "absolute", left: 11, top: "50%", transform: "translateY(-50%)", color: MUTED }} />
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Rechercher…"
+            style={{
+              width: "100%", padding: "8px 12px 8px 32px",
+              borderRadius: 8, border: "1px solid rgba(15,23,42,0.12)",
+              fontSize: 13, color: TEXT, outline: "none", background: WHITE,
+              fontFamily: "inherit", boxSizing: "border-box",
+            }}
+            onFocus={e => e.target.style.borderColor = ACCENT}
+            onBlur={e => e.target.style.borderColor = "rgba(15,23,42,0.12)"}
+          />
+        </div>
+      </div>
+
+      {/* Table activités */}
+      <div style={{ background: WHITE, borderRadius: 16, border: "1px solid rgba(15,23,42,0.06)", boxShadow: "0 2px 12px rgba(15,23,42,0.05)", overflow: "hidden" }}>
+        {filtered.length === 0 ? (
+          <div style={{ padding: 56, textAlign: "center", color: MUTED, fontSize: 14 }}>
+            <div style={{ fontSize: 44, marginBottom: 12 }}>📂</div>
+            Aucune activité {search ? `pour "${search}"` : ""}
+          </div>
+        ) : (
+          <table style={{ width: "100%", borderCollapse: "collapse" }}>
+            <thead>
+              <tr style={{ background: "#f8fafc" }}>
+                {["Date", "Type", "Référence", "Libellé", "Détail / Contact", "Statut"].map(h => (
+                  <th key={h} style={{ padding: "11px 14px", textAlign: "left", fontSize: 11, fontWeight: 700, color: MUTED, textTransform: "uppercase", letterSpacing: 0.8, whiteSpace: "nowrap" }}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((item, i) => {
+                const meta = TYPE_META[item._type] || {};
+                const date = item.created_at ? new Date(item.created_at).toLocaleDateString("fr-FR") : "—";
+                return (
+                  <tr key={i} style={{ borderTop: "1px solid rgba(15,23,42,0.05)" }}
+                    onMouseEnter={e => e.currentTarget.style.background = "#f8fafc"}
+                    onMouseLeave={e => e.currentTarget.style.background = "transparent"}
+                  >
+                    <td style={{ padding: "12px 14px", color: MUTED, fontSize: 12, whiteSpace: "nowrap" }}>{date}</td>
+                    <td style={{ padding: "12px 14px" }}>
+                      <span style={{
+                        background: `${meta.color}15`, color: meta.color,
+                        padding: "3px 10px", borderRadius: 20,
+                        fontSize: 11, fontWeight: 700, whiteSpace: "nowrap",
+                        border: `1px solid ${meta.color}30`,
+                      }}>
+                        {meta.icon} {meta.label}
+                      </span>
+                    </td>
+                    <td style={{ padding: "12px 14px", color: meta.color, fontSize: 11, fontWeight: 700, whiteSpace: "nowrap" }}>{item._ref}</td>
+                    <td style={{ padding: "12px 14px", color: TEXT, fontSize: 13, fontWeight: 600, maxWidth: 180 }}>
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item._label}</div>
+                    </td>
+                    <td style={{ padding: "12px 14px", color: MUTED, fontSize: 12, maxWidth: 180 }}>
+                      <div style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{item._sub}</div>
+                    </td>
+                    <td style={{ padding: "12px 14px" }}><StatusBadge statut={item.statut} /></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        )}
+        {filtered.length > 0 && (
+          <div style={{ padding: "12px 16px", background: "#f8fafc", borderTop: "1px solid rgba(15,23,42,0.05)", color: MUTED, fontSize: 12 }}>
+            {filtered.length} activité(s) affichée(s){search ? ` pour "${search}"` : ""}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -1630,14 +1947,15 @@ export default function AdminPage({ onBack }) {
 
   /* --- DASHBOARD --- */
   const TABS = [
-    { id: "overview", label: "Vue d'ensemble", Icon: LayoutDashboard },
-    { id: "articles", label: "Articles", Icon: Newspaper },
-    { id: "domaines", label: "Domaines .td", Icon: Globe },
-    { id: "equipements", label: "Équipements", Icon: Monitor },
-    { id: "pannes", label: "Pannes", Icon: AlertTriangle },
-    { id: "emails", label: "Mails", Icon: Mail },
-    { id: "plateformes", label: "Plateformes", Icon: Layers },
-    { id: "contacts", label: "Messages", Icon: Eye },
+    { id: "overview",   label: "Vue d'ensemble",   Icon: LayoutDashboard },
+    { id: "activites",  label: "Activités",         Icon: Activity        },
+    { id: "articles",   label: "Articles",          Icon: Newspaper       },
+    { id: "domaines",   label: "Domaines .td",      Icon: Globe           },
+    { id: "equipements",label: "Équipements",       Icon: Monitor         },
+    { id: "pannes",     label: "Pannes",            Icon: AlertTriangle   },
+    { id: "emails",     label: "Mails",             Icon: Mail            },
+    { id: "plateformes",label: "Plateformes",       Icon: Layers          },
+    { id: "contacts",   label: "Messages",          Icon: Eye             },
   ];
 
   const activePannes = pannes.filter(p => ["Ouvert", "En cours"].includes(p.statut)).length;
@@ -1770,8 +2088,9 @@ export default function AdminPage({ onBack }) {
           </div>
         ) : (
           <>
-            {tab === "overview" && <OverviewTab stats={stats} domaines={domaines} equipements={equipements} pannes={pannes} emails={emails} plateformes={plateformes} contacts={contacts} />}
-            {tab === "articles" && <ArticlesTab articles={articles} onRefresh={loadAll} />}
+            {tab === "overview"    && <OverviewTab stats={stats} domaines={domaines} equipements={equipements} pannes={pannes} emails={emails} plateformes={plateformes} contacts={contacts} />}
+            {tab === "activites"   && <ActivitesTab domaines={domaines} equipements={equipements} pannes={pannes} emails={emails} plateformes={plateformes} contacts={contacts} />}
+            {tab === "articles"    && <ArticlesTab articles={articles} onRefresh={loadAll} />}
             {tab === "domaines" && <DossiersTab type="domaine" data={domaines} onDataChange={setDomaines} />}
             {tab === "equipements" && <DossiersTab type="equipement" data={equipements} onDataChange={setEquipements} />}
             {tab === "pannes" && <DossiersTab type="panne" data={pannes} onDataChange={setPannes} />}
